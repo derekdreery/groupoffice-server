@@ -1,0 +1,20 @@
+<?php
+return array(
+		'Intermesh\Core\Config' => array(
+				'productName' => 'Group-Office 7.0',
+				'dataFolder'=>dirname(__FILE__).'/data'
+		),
+		'Intermesh\Core\Debugger' => array(
+				'enabled' => true
+		),
+		'Intermesh\Core\Db\Connection' => array(
+				'user' => 'root',
+				'port' => 3306,
+				'pass' => '',
+				'database' => 'go7',
+				'host' => 'localhost',
+		),
+		'IPE\Apps\Addressbook\Model\Contact' => array(
+			'defaultCountry' => 'GB'
+		)
+);
