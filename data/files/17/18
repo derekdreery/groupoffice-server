@@ -1,0 +1,27 @@
+4: Database design and briefing by Merijn to programmer
+
+Main screen
+4: Setup module and main screen 
+8: Create compaign tree with categories
+2: Status filters
+8: Metrics panel
+8: Contact pane and campaign management pane
+
+Administration
+4: Add address books
+4: Lead source config for Dotmailer
+4: Statuses
+4: Permission types
+
+Create campaign
+2: New campaign dialog
+16: DotMailer source import
+8: Intergrate existing mail and sms functionality
+24: Phone call campaign
+
+8: Testing by Merijn
+
+-------------------------------
+
+108 hours in total * € 80,- = € 8640,-
+

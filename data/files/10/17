@@ -1,0 +1,29 @@
+Form validation
+===============
+
+1. Use im-submit="save()" instead of ng-submit. 
+
+im-submit will add a "submitted" boolean to the FormController and css class to the form so we can show the validation errors when the user presses submit.
+
+Use <im-show-error> tags that will also present the server side validation errors.
+
+
+A simple form tag follows. The name attribute is required:
+
+<form name="contactForm" im-submit="save()" novalidate>
+
+A simple form input with im-show-error (A name attribute is required on the input when using <m-show-error>:
+
+<div class="form-group">
+	<label class="col-sm-3 control-label" for="username">{{"Username"| t}}</label>
+	<div class="col-sm-9">
+		<input type="text" id="username" name="username" class="form-control" ng-model="user.attributes.username" required />
+		<im-show-error for="username" im-model="user"></im-show-error>
+	</div>
+</div>
+
+You can also set custom error messages:
+
+<im-show-error for="passwordConfirm" im-model="user" im-messages="{'imMatch': 'The passwords don\'t match'}"></im-show-error>
+
+

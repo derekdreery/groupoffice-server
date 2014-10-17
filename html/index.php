@@ -1,0 +1,14 @@
+<?php
+/* @var $classLoader Composer\Autoload\ClassLoader */
+$classLoader = require("../vendor/autoload.php");
+
+use Intermesh\Core\App as App;
+
+//Initialize the framework with confuration
+App::init(require('../config.php'));
+
+//Class loader used to find PHP classes
+App::config()->classLoader = $classLoader;
+
+//Run the controller
+App::router()->runController();
