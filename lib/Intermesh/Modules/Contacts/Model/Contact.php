@@ -113,10 +113,10 @@ class Contact extends AbstractRecord{
 
 		$photosFolder = self::getPhotosFolder();
 		
-		$destinationFile = $photosFolder->createFile($temporaryImagePath);
-		$destinationFile->delete();
-
 		$file = new File(App::session()->getTempFolder().'/'.$temporaryImagePath);
+		
+		$destinationFile = $photosFolder->createFile($this->id.'.'.$file->getExtension());
+		$destinationFile->delete();
 
 		$file->move($destinationFile);
 		$this->photoFilePath = $file->getRelativePath(self::getPhotosFolder());

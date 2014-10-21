@@ -26,9 +26,11 @@ abstract class AbstractAuthenticationController extends AbstractController{
 	
 	public function __construct() {
 		
-		$this->authenticate();
 		
-		parent::__construct();		
+		
+		parent::__construct();	
+		
+		$this->authenticate();
 	}	
 	
 	private function _checkModulePermission(){
@@ -49,12 +51,12 @@ abstract class AbstractAuthenticationController extends AbstractController{
 	protected function authenticate() {
 		if ($this->authenticationRequired) {
 			if (!User::current() || !$this->_checkModulePermission()) {
-				header('Content-Type: text/html;charset=UTF-8');
+//				header('Content-Type: text/html;charset=UTF-8');
 				header("HTTP/1.0 403 Forbidden");
 				header("Status: 403 Forbidden");
 				
-				echo '<h1>403 Forbidden</h1>';
-				echo '<p>You must be logged in to view this page</p>';
+				
+				echo $this->view->render('exception', new \Intermesh\Core\Exception\Forbidden());
 				exit();
 			}
 		}

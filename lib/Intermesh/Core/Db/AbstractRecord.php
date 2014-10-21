@@ -1359,7 +1359,7 @@ abstract class AbstractRecord extends Model {
 	 * @param array $attributes
 	 * @return \static
 	 */
-	public function setAttributes($attributes) {
+	public function setAttributes(array $attributes) {
 
 		foreach ($attributes as $attributeName => $value) {
 			$this->{$attributeName} = $value;

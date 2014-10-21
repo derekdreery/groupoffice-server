@@ -314,9 +314,12 @@ class Relation {
 					{
 						$model->{$this->key} = $value['attributes'][$this->foreignKey];
 					}
-				}else
+				}elseif(is_a($value, AbstractRecord::className()))
 				{
 					$model->{$this->key} = $value->{$this->foreignKey};
+				}else
+				{
+					throw new Exception("Invalid value in Relation::set(): ".var_export($value, true));
 				}
 				
 				

@@ -123,11 +123,11 @@ class File extends FileSystemObject {
 	 * @param string $filename
 	 * @return string
 	 */
-	public static function getExtension($filename = null) {
+	public function getExtension() {
 		
-		if(!isset($filename)){
+//		if(!isset($filename)){
 			$filename = $this->getName();
-		}
+//		}
 		
 		$extension = '';
 
