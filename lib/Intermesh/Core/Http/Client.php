@@ -38,8 +38,8 @@ class Client{
 		
 		$this->_curl = curl_init();
 		
-		$cookieFile = App::user() ? 'cookie_'.App::user()->id.'.txt' : 'cookie_0.txt';
-		$this->_cookieFile = App::config()->getTempFolder().$cookieFile;
+		
+		$this->_cookieFile = App::session()->getTempFolder().'/cookie.txt';
 		
 		
 		curl_setopt($this->_curl, CURLOPT_COOKIEJAR, $this->_cookieFile);
@@ -54,7 +54,7 @@ class Client{
 		if(!empty(App::config()->curl_proxy))
 			curl_setopt($this->_curl, CURLOPT_PROXY, App::config()->curl_proxy);
 		
-		$this->setCurlOption(CURLOPT_USERAGENT, "Group-Office HttpClient ".App::config()->version. " (curl)");
+		$this->setCurlOption(CURLOPT_USERAGENT, "Group-Office HttpClient (curl)");
 		
 		//set ajax header for Group-Office
 		$this->setCurlOption(CURLOPT_HTTPHEADER, array("X-Requested-With: XMLHttpRequest"));

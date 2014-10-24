@@ -304,7 +304,7 @@ class Relation {
 							
 							$this->failedRelatedModel = $belongsTo;
 							
-							return false;
+							throw new Exception("Could not set belongs to relation because it didn't validate: ".var_export($belongsTo->getValidationErrors(), true));
 						}else
 						{
 														

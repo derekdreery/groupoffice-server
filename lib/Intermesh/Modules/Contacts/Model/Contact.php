@@ -57,6 +57,8 @@ class Contact extends AbstractRecord{
 			$r->hasMany('employees', Contact::className(), 'companyContactId'),
 			$r->belongsTo('company', Contact::className(), 'companyContactId'),
 			
+			$r->belongsTo('user', User::className(), 'userId'),
+			
 			$r->hasMany('timeline', Item::className(), 'contactId'),
 			
 			$r->hasOne('customfields', ContactCustomFields::className(), 'id')->autoCreate()
@@ -97,7 +99,10 @@ class Contact extends AbstractRecord{
 	 */
 	public function getPhotoFile(){
 		if(empty($this->photoFilePath)){
-			return false;
+			
+			$gender= $this->gender =='M' ? 'male' : 'female';
+			
+			return new File(App::config()->getLibPath().'/Modules/Contacts/Resources/'.$gender.'.svg');
 		}else
 		{
 			return new File(self::getPhotosFolder().'/'.$this->photoFilePath);
@@ -124,6 +129,22 @@ class Contact extends AbstractRecord{
 			$this->save();
 		}
 
+	}
+	
+	public function validate() {
+		
+		//always fill name field on contact too
+		if(!isset($this->name) && !$this->isCompany){
+			$this->name = $this->firstName;
+			
+			if(!empty($this->middleName)){
+					$this->name .= ' '.$this->middleName;
+			}
+			
+			$this->name .= ' '.$this->lastName;
+		}
+		
+		return parent::validate();
 	}
 
 	public function save() {
@@ -154,6 +175,14 @@ class Contact extends AbstractRecord{
 			$model->readAccess=1;
 			$model->deleteAccess=1;
 			$model->save();
+			
+			if($this->userId > 0){
+				$contactRole = new ContactRole();
+				$contactRole->contactId = $this->id;
+				$contactRole->roleId = $this->userId;
+				$contactRole->editAccess = true;
+				$contactRole->save();
+			}
 			
 			$autoRoles = Role::findAutoRoles();
 			

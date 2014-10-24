@@ -48,7 +48,7 @@ class UserController extends AbstractAuthenticationController {
 								->orderBy([$orderColumn => $orderDirection])
 								->limit($limit)
 								->offset($offset)
-								->search($searchQuery, array('t.username', 't.email'))
+								->search($searchQuery, array('t.username'))
 		);
 
 		$store = new Store($users);

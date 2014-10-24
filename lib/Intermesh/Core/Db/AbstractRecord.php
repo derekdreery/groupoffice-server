@@ -472,6 +472,21 @@ abstract class AbstractRecord extends Model {
 			throw new Exception("function {$this->className()}:$name does not exist");
 		}
 	}
+	
+	public function setCachedAttributes($attr){
+		foreach ($attr as $colName => $value) {
+			if ($this->getColumn($colName)) {
+				$this->_attributes[$colName] = $value;
+			} else {
+				//Nested relation query. eg. contact.addressbook.owner.*
+				//Pass on cached relation attributes to the related model.
+				$this->setJoinRelationCache($colName, $value);
+			}
+		}
+		$this->castDatabaseAttributes();
+		
+		$this->_modifiedAttributes = [];
+	}
 
 	/**
 	 * Get's a relation from cache or from the database
@@ -489,7 +504,12 @@ abstract class AbstractRecord extends Model {
 		}
 		
 		if(!isset($query)){
-			if (isset($this->_joinRelationAttr[$name])) {
+			
+			if(isset($this->_setRelations[$name])){
+				
+				//cached relations when set directly in the __set function
+				return $this->_setRelations[$name];
+			}else if (isset($this->_joinRelationAttr[$name])) {
 				//joinRelationAttr are set when Query::joinRelation() is used with find().			
 				$attr = $this->_joinRelationAttr[$name];
 
@@ -508,28 +528,24 @@ abstract class AbstractRecord extends Model {
 				}
 
 				$model = new $modelName(false);
-				foreach ($attr as $colName => $value) {
-					if ($model->getColumn($colName)) {
-						$model->{$colName} = $value;
-					} else {
-						//Nested relation query. eg. contact.addressbook.owner.*
-						//Pass on cached relation attributes to the related model.
-						$model->setJoinRelationCache($colName, $value);
-					}
-				}
-				$model->castDatabaseAttributes();
+				$model->setCachedAttributes($attr);
+				
 
 				//unset($this->_joinRelationAttr[$cacheKey]);
+				
+				$this->_setRelations[$name] = $model;
 
 				return $model;
-			} else if(isset($this->_setRelations[$name])){
-				
-				//cached relations when set directly in the __set function
-				return $this->_setRelations[$name];
 			}
 		}		
 		
-		return $relation->find($this, $query);		
+		$model = $relation->find($this, $query);		
+		
+		if($model){
+			$this->_setRelations[$name] = $model;
+		}
+		
+		return $model;
 	}
 
 	/**
@@ -566,8 +582,12 @@ abstract class AbstractRecord extends Model {
 			} elseif (($relation = $this->getRelation($name))) {
 
 				if ($relation->isA(Relation::TYPE_BELONGS_TO)) {
-					//belongs too must be set immediately.
-					$relation->set($this, $value);					
+					//belongs to must be set immediately.
+					App::debug("SET BELONGS TO");
+					App::debug($value);
+					
+					$relation->set($this, $value);				
+					
 				}else
 				{				
 					//processed in the save() function
@@ -822,8 +842,11 @@ abstract class AbstractRecord extends Model {
 			$this->dbUpdate();
 		}
 
-		foreach ($this->_saveRelations as $r) {
+		foreach ($this->_saveRelations as $r) {		
+				
 			if(!$r["relation"]->set($this, $r["value"])){
+				
+				App::debug("Saving relation". $r['name'].' failed: '.var_export($r['relation']->getValidationErrors()));
 
 				$this->setValidationError($r['name'], 'relation', $r['relation']->getValidationErrors());				
 				App::dbConnection()->getPDO()->rollBack();				
@@ -970,14 +993,14 @@ abstract class AbstractRecord extends Model {
 				$sql .= "`" . $colName . "`= " . $tag;
 				
 				$tags[$colName] = $tag;
-				$bindParams[$tag] = $this->_attributes[$colName];
+//				$bindParams[$tag] = $this->_attributes[$colName];
 			}
 			
 		}else {
 			$i++;
 			$tag = ':attr'.$i;
 			$sql .= "`" . $this->primaryKeyColumn() . "`=" . $tag ;
-			$bindParams[$tag] = $this->_attributes[$this->primaryKeyColumn()];
+//			$bindParams[$tag] = $this->_attributes[$this->primaryKeyColumn()];
 			$tags[$this->primaryKeyColumn()] = $tag;
 		}
 

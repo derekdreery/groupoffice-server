@@ -17,6 +17,10 @@ class CsvController extends AbstractAuthenticationController {
 	
 
 	public function actionReadFile() {
+		
+		
+		//Don't be strict on imported values
+		\Intermesh\Core\App::dbConnection()->getPDO()->query("SET sql_mode=''");
 
 		$modelName = Contact::className();
 		//Zoekcode,Naam,Voornaam,Tussenvoegsel,Achternaam,Voorletters,Geboortedatum,Titel,Geslacht,Functie,Bankrekening (BBAN),IBAN/bankrekening,BIC,Datum ondertekening,Datum beëindiging,Laatste incassodatum,Eerste incasso SEPA,Eenmalige machtiging,Mandaatkenmerk,Betalingswijze,Relatiebeheerder,Niet actief,Straat hoofdadres,Postcode hoofdadres,Plaats hoofdadres,Provincie hoofdadres,Land hoofdadres,E-mailadres,Faxnummer,Telefoonnummer,Mobiel nummer,Webpagina,Straat postadres,Postcode postadres,Plaats postadres,Provincie postadres,Land postadres,Afkoop bardienst,Bardienst avond,Bardienst middag,Bardienst ochtend,Blad,Bondsnummer,Comm,Fotonummer,SD,SE,Factuur toesturen,Begindatum lidmaatschap,Einddatum lidmaatschap,Postadres via ander lid,Betalend lid,KvK-nummer,Soort relatie,Persoontype,Naam contactpersoon,Afdeling,Is afzonderlijke relatie,BTW-nummer,BrancheZoekcode,BrancheBranchenaam,RechtsvormAfkorting,RechtsvormRechtsvorm,Bedrijfsgrootte,Valuta voor relatie,Debiteur,Crediteur,Verkoopdagboek,Verkooppostnummer,Verkoper bij debiteur,Kortingsmarge debiteur,Prijslijst bij debiteur,Kredietlimiet debiteur,Debiteur geblokkeerd,Betalingsvoorwaarde debiteur,Leveringsvoorwaarde debiteur,Inkoopdagboeknummer,Inkooppostnummer,Kortingsmarge crediteur,Kredietlimiet crediteur,Betalingsvoorwaarde crediteur,Leveringsvoorwaarde crediteur,Straat afleveradres,Postcode afleveradres,Plaats afleveradres,Provincie afleveradres,Land afleveradres,Straat factuuradres,Postcode factuuradres,Plaats factuuradres,Provincie factuuradres,Land factuuradres
@@ -30,8 +34,12 @@ class CsvController extends AbstractAuthenticationController {
 			'gender' => 'Geslacht',
 			'dates' => [['date' => 'Geboortedatum', 'type' => '"birthday"']],
 			'emailAddresses' => [['email' => 'E-mailadres', 'type' => '"home"']],
-			'customfields' => ['Bondsnummer' => 'Bondsnummer'],
-			'phoneNumbers' => [['number' => 'Telefoonnummer', 'type' => '"home"'], ['number' => 'Mobiel nummer', 'type' => '"mobile"']]
+			'customfields' => ['Bondsnummer' => 'Bondsnummer', 'Lid sinds' => 'Begindatum lidmaatschap'],
+			'phoneNumbers' => [
+					['number' => 'Telefoonnummer', 'type' => '"home"'], 
+					['number' => 'Mobiel nummer', 'type' => '"mobile"']
+				],
+			'user' => ['username' => 'Bondsnummer', 'password' => 'Postcode hoofdadres']
 		];
 
 		$fp = fopen($filename, 'r');
@@ -44,26 +52,40 @@ class CsvController extends AbstractAuthenticationController {
 			foreach($headings as $index => $colName){
 				$this->_record[$colName] = $csvRecord[$index];
 			}
+			
+			try{
 
-			$model = new $modelName;
+				$model = new $modelName;
 
-			/* @var $model Contact */
+				/* @var $model Contact */
+
+
+				$attributes = $this->_buildAttributes($modelName, $mapping);
+
+	//			var_dump($attributes);
+	//			exit();
+
+				$model->setAttributes($attributes);
+
+				$success = $model->save();
+
+				if (!$success) {
+					echo "Import failed: " . var_export($model->getValidationErrors(), true) . "\n----\n\n";
+				}
+				
+			}catch( \Exception $e){
+				echo $e->getMessage()."\n";
+				
+				var_dump($attributes);
+				
+				echo "-----------------\n\n";
+			}
+			
+//			break;
 
 			
-			$attributes = $this->_buildAttributes($modelName, $mapping);
-
-
-			$model->setAttributes($attributes);
-
-			$success = $model->save();
-
-			if (!$success) {
-				echo "Import failed: " . var_export($model->getValidationErrors(), true) . "\n----\n\n";
-			}
-
-//			var_dump($attributes);
-//			exit();
 		}
+		echo $this->view->render('json', []);
 	}
 	
 	
@@ -93,7 +115,7 @@ class CsvController extends AbstractAuthenticationController {
 			if($column->required && empty($this->_record[$csvField])){
 				
 				//throw exception here so we can catch and skup required relation attributes
-				throw new Exception('required');
+				throw new Exception('Column "'.$modelName.'::'.$goField.'" is required');
 			}
 			
 			//plain attribute of model

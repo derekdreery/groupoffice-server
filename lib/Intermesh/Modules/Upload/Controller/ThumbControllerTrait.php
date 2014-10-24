@@ -86,6 +86,8 @@ trait ThumbControllerTrait {
 		}catch(Intermesh\Core\Exception\Forbidden $e){
 			App::request()->redirect('http://www.placehold.it/'.$w.'x'.$h.'/EFEFEF/AAAAAA&text=Forbidden');
 		}
+		
+		
 
 		$useCache = $this->thumbUseCache();
 
@@ -97,6 +99,17 @@ trait ThumbControllerTrait {
 		if ($file->getSize() > 4 * 1024 * 1024) {
 			App::request()->redirect('http://www.placehold.it/'.$w.'x'.$h.'/EFEFEF/AAAAAA&text=Image+too+large');
 		}
+		
+		
+		if($file->getExtension() ==='svg'){
+			header('Content-Type: image/svg+xml');
+			header('Content-Disposition: inline; filename="' . $file->getName() . '"');
+			header('Content-Transfer-Encoding: binary');
+			
+			$file->output();
+			exit();
+		}
+		
 
 		$cacheDir = App::config()->getTempFolder()->createFolder('thumbcache')->create();
 

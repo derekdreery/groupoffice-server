@@ -70,7 +70,7 @@ class Config {
 	}
 
 	/**
-	 * Get path to library
+	 * Get path to lib/Intermesh
 	 *
 	 * @return string
 	 */

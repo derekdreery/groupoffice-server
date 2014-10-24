@@ -29,6 +29,13 @@ use Intermesh\Core\Model;
 class ValidatePassword extends AbstractValidationRule {
 	
 	/**
+	 * Enable strength check
+	 * 
+	 * @var boolean 
+	 */
+	public $enabled = true;
+	
+	/**
 	 * Minimum characters
 	 * 
 	 * @var int 
@@ -94,54 +101,55 @@ class ValidatePassword extends AbstractValidationRule {
 		//Get old value because it's encrypted
 		$password = $model->{$this->confirmAttribute};
 		
-		if($model->{$this->confirmAttribute}!=$model->{$this->getId()}){
+		if(isset($model->{$this->confirmAttribute}) && $model->{$this->confirmAttribute}!=$model->{$this->getId()}){
 			$this->errorCode='passwordMismatch';
 			return false;
 		}
 		
-		$this->errorInfo=[];
-		if($this->minLength && strlen($password)<$this->minLength){
-			$this->errorCode='weakPassword';
-			$this->errorInfo['minLength'] = $this->minLength;			
-		}
-		
-		if($this->requireUpperCase && !preg_match('/[A-Z]/', $password)){
-			$this->errorCode='weakPassword';
-			$this->errorInfo['requireUpperCase'] = true;
-			
-		}
-		
-		if($this->requireLowerCase && !preg_match('/[a-z]/', $password)){
-			$this->errorCode='weakPassword';
-			$this->errorInfo['requireLowerCase'] = true;
-		}
-		
-		if($this->requireNumber && !preg_match('/[0-9]/', $password)){
-			$this->errorCode='weakPassword';
-			$this->errorInfo['requireNumber'] = true;		
-		}
-		
-		if($this->requireSpecialChars && !preg_match('/[^\da-zA-Z]/', $password)){
-			$this->errorCode='weakPassword';
-			$this->errorInfo['requireSpecialChars'] = true;		
-		}
-		
-		if($this->minUniqueChars){
-			$arr = str_split($password);
-			$arr = array_unique($arr);
-			
-			if(count($arr)<$this->minUniqueChars){
+		if($this->enabled){
+			$this->errorInfo=[];
+			if($this->minLength && strlen($password)<$this->minLength){
 				$this->errorCode='weakPassword';
-				$this->errorInfo['minUniqueChars'] = $this->minUniqueChars;
+				$this->errorInfo['minLength'] = $this->minLength;			
+			}
+
+			if($this->requireUpperCase && !preg_match('/[A-Z]/', $password)){
+				$this->errorCode='weakPassword';
+				$this->errorInfo['requireUpperCase'] = true;
+
+			}
+
+			if($this->requireLowerCase && !preg_match('/[a-z]/', $password)){
+				$this->errorCode='weakPassword';
+				$this->errorInfo['requireLowerCase'] = true;
+			}
+
+			if($this->requireNumber && !preg_match('/[0-9]/', $password)){
+				$this->errorCode='weakPassword';
+				$this->errorInfo['requireNumber'] = true;		
+			}
+
+			if($this->requireSpecialChars && !preg_match('/[^\da-zA-Z]/', $password)){
+				$this->errorCode='weakPassword';
+				$this->errorInfo['requireSpecialChars'] = true;		
+			}
+
+			if($this->minUniqueChars){
+				$arr = str_split($password);
+				$arr = array_unique($arr);
+
+				if(count($arr)<$this->minUniqueChars){
+					$this->errorCode='weakPassword';
+					$this->errorInfo['minUniqueChars'] = $this->minUniqueChars;
+				}
+			}
+
+			if($this->errorCode != ''){
+				return false;
 			}
 		}
 		
-		if($this->errorCode != ''){
-			return false;
-		}
-		
-		
-		$model->password = crypt($password);	
+			
 		return true;		
 	}
 }

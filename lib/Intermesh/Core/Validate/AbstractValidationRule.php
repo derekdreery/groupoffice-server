@@ -38,6 +38,8 @@ abstract class AbstractValidationRule extends AbstractObject{
 	 */
 	public function __construct($id) {
 		$this->_id=$id;
+		
+		parent::__construct();
 	}
 	
 	/**

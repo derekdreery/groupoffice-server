@@ -4,13 +4,11 @@ namespace Intermesh\Modules\Auth\Model;
 
 use Intermesh\Core\App;
 use Intermesh\Core\Db\AbstractRecord;
-use Intermesh\Core\Db\Relation;
 use Intermesh\Core\Db\RelationFactory;
 use Intermesh\Core\Db\SoftDeleteTrait;
 use Intermesh\Core\Model\Session;
 use Intermesh\Core\Validate\ValidatePassword;
 use Intermesh\Modules\Contacts\Model\Contact;
-use Intermesh\Modules\Contacts\Model\ContactRole;
 
 /**
  * User model
@@ -166,6 +164,9 @@ class User extends AbstractRecord {
 	public function save() {
 		if ($this->isModified('password') && !empty($this->password)) {
 			$this->digest = md5($this->username . ":" . App::config()->productName . ":" . $this->password);
+			
+			App::debug($this->password);
+			$this->password = crypt($this->password);
 		}
 
 		$wasNew = $this->getIsNew();
@@ -190,13 +191,6 @@ class User extends AbstractRecord {
 			$ur->userId = $this->id;
 			$ur->roleId = Role::findEveryoneRole()->id;
 			$ur->save();
-			
-			$contactRole = new ContactRole();
-			$contactRole->contactId = $this->contact->id;
-			$contactRole->roleId = $role->id;
-			$contactRole->editAccess = true;
-			$contactRole->save();
-			
 		}
 
 		return $success;
