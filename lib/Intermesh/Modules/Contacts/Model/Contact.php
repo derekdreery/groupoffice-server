@@ -45,7 +45,7 @@ class Contact extends AbstractRecord{
 	use RecordFolderTrait;
 
 	public static function defineRelations(RelationFactory $r){
-		return array(
+		return [
 			$r->belongsTo('owner', User::className(), 'ownerUserId'),
 			$r->hasMany('roles', ContactRole::className(), 'contactId'),
 			$r->hasMany('emailAddresses', ContactEmailAddress::className(), 'contactId')->autoCreate(),
@@ -62,7 +62,7 @@ class Contact extends AbstractRecord{
 			$r->hasMany('timeline', Item::className(), 'contactId'),
 			
 			$r->hasOne('customfields', ContactCustomFields::className(), 'id')->autoCreate()
-		);
+		];
 	}
 
 	/**
@@ -124,7 +124,7 @@ class Contact extends AbstractRecord{
 		$destinationFile->delete();
 
 		$file->move($destinationFile);
-		$this->photoFilePath = $file->getRelativePath(self::getPhotosFolder());
+		$this->photoFilePath = $file->getRelativePath($photosFolder);
 		if($save){
 			$this->save();
 		}

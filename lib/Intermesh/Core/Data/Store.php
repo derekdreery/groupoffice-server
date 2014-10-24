@@ -136,6 +136,10 @@ class Store extends AbstractObject{
 				$relation = call_user_func([$this->_finder->recordClassName, 'getRelation'], $parts[0]);				
 				/* @var $relation Relation */
 				
+				if(!$relation){
+					throw new Exception("Relation '".$parts[0]."' not found!");
+				}
+				
 				if($relation->isA(Relation::TYPE_BELONGS_TO) || $relation->isA(Relation::TYPE_HAS_ONE)){				
 					$relationDef = implode('.', $parts);
 					if(!isset($this->_finder->getQuery()->joinRelations[$relationDef])){
