@@ -109,7 +109,7 @@ class Role extends AbstractRecord{
 				foreach($this->_modulesWithPermissions as $m){
 				
 					$mr = ModuleRole::findByPk(['roleId' => $this->id, 'moduleId' => $m['attributes']['id']]);		
-					
+
 					if(!$mr){
 						$mr = new ModuleRole();
 						$mr->moduleId = $m['attributes']['id'];
@@ -119,10 +119,10 @@ class Role extends AbstractRecord{
 					unset($m['attributes']['id']);
 					
 					$mr->setAttributes($m['attributes']);
-					
-					
 					if($mr->useAccess || $mr->createAccess){
-						$mr->save();
+						if(!$mr->save()){
+							throw new Exception("Could not save role: ".var_export($mr->getValidationErrors(), true));
+						}
 					}else
 					{
 						$mr->delete();

@@ -175,7 +175,7 @@ trait ThumbControllerTrait {
 
 	private function _thumbHeaders($useCache, $fileName) {
 
-		if (!$useCache) {
+		if ($useCache) {
 			header("Expires: " . date("D, j M Y G:i:s ", time() + (86400 * 365)) . 'GMT'); //expires in 1 year
 			header('Cache-Control: cache');
 			header('Pragma: cache');

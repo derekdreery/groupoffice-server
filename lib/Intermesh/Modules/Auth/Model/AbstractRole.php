@@ -92,7 +92,7 @@ abstract class AbstractRole extends AbstractRecord {
 	public function save() {
 		
 		$this->_checkPermissionBooleans();
-		
+				
 		return parent::save();
 	}
 

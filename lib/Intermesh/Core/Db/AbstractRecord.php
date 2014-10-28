@@ -978,12 +978,13 @@ abstract class AbstractRecord extends Model {
 
 		
 		if (is_array($this->primaryKeyColumn())) {
-			$i++;
-			
-			$tag = ':attr'.$i;
-
 			$first = true;
 			foreach ($this->primaryKeyColumn() as $colName) {
+				
+				$i++;
+				
+				$tag = ':attr'.$i;
+				
 				if (!$first){
 					$sql .= ' AND ';
 				}else{
@@ -993,14 +994,12 @@ abstract class AbstractRecord extends Model {
 				$sql .= "`" . $colName . "`= " . $tag;
 				
 				$tags[$colName] = $tag;
-//				$bindParams[$tag] = $this->_attributes[$colName];
 			}
 			
 		}else {
 			$i++;
 			$tag = ':attr'.$i;
 			$sql .= "`" . $this->primaryKeyColumn() . "`=" . $tag ;
-//			$bindParams[$tag] = $this->_attributes[$this->primaryKeyColumn()];
 			$tags[$this->primaryKeyColumn()] = $tag;
 		}
 
