@@ -102,7 +102,7 @@ class Contact extends AbstractRecord{
 			
 			$gender= $this->gender =='M' ? 'male' : 'female';
 			
-			return new File(App::config()->getLibPath().'/Modules/Contacts/Resources/'.$gender.'.svg');
+			return new File(App::config()->getLibPath().'/Modules/Contacts/Resources/'.$gender.'.png');
 		}else
 		{
 			return new File(self::getPhotosFolder().'/'.$this->photoFilePath);

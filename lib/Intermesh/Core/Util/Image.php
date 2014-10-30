@@ -146,8 +146,9 @@ class Image {
 
 		if (isset($this->_resizedImage) || $imageType != $this->_imageType) {
 
-			if (!$imageType)
+			if (!$imageType){
 				$imageType = $this->_imageType;
+			}
 
 			$ret = false;
 			if ($imageType == IMAGETYPE_JPEG) {

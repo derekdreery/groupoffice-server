@@ -1,5 +1,6 @@
 <?php
 /* @var $classLoader Composer\Autoload\ClassLoader */
+chdir(dirname(__FILE__));
 $classLoader = require("../vendor/autoload.php");
 
 use Intermesh\Core\App as App;

@@ -101,14 +101,14 @@ trait ThumbControllerTrait {
 		}
 		
 		
-		if($file->getExtension() ==='svg'){
-			header('Content-Type: image/svg+xml');
-			header('Content-Disposition: inline; filename="' . $file->getName() . '"');
-			header('Content-Transfer-Encoding: binary');
-			
-			$file->output();
-			exit();
-		}
+//		if($file->getExtension() ==='svg'){
+//			header('Content-Type: image/svg+xml');
+//			header('Content-Disposition: inline; filename="' . $file->getName() . '"');
+//			header('Content-Transfer-Encoding: binary');
+//			
+//			$file->output();
+//			exit();
+//		}
 		
 
 		$cacheDir = App::config()->getTempFolder()->createFolder('thumbcache')->create();
@@ -153,18 +153,18 @@ trait ThumbControllerTrait {
 
 				if (!$useCache) {
 
-					$success = $image->save($readfile, IMAGETYPE_JPEG);
+					$success = $image->save($readfile);
 
 					if (!$success) {
 						App::request()->redirect('http://www.placehold.it/' + $image->getWidth() + 'x' + $image->getHeight() + '/EFEFEF/AAAAAA&text=Could+not+resize+image');
 					}
 
-					$this->_thumbHeaders($useCache, $file->getName());
+					$this->_thumbHeaders($useCache, $file);
 					readfile($readfile);
 				} else {
-					$this->_thumbHeaders($useCache, $file->getName());
+					$this->_thumbHeaders($useCache, $file);
 
-					$image->output(IMAGETYPE_JPEG);
+					$image->output();
 				}
 			}
 		} else {
@@ -173,15 +173,15 @@ trait ThumbControllerTrait {
 		}
 	}
 
-	private function _thumbHeaders($useCache, $fileName) {
+	private function _thumbHeaders($useCache, File $file) {
 
 		if ($useCache) {
 			header("Expires: " . date("D, j M Y G:i:s ", time() + (86400 * 365)) . 'GMT'); //expires in 1 year
 			header('Cache-Control: cache');
 			header('Pragma: cache');
 		}
-		header('Content-Type: image/jpeg');
-		header('Content-Disposition: inline; filename="' . $fileName . '"');
+		header('Content-Type: '.$file->getContentType());
+		header('Content-Disposition: inline; filename="' . $file->getName() . '"');
 		header('Content-Transfer-Encoding: binary');
 	}
 
