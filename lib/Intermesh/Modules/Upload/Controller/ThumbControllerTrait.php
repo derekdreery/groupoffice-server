@@ -57,11 +57,11 @@ trait ThumbControllerTrait {
 		$file = $this->thumbGetFile();
 		
 		if (!$file->exists()) {
-			App::request()->redirect('http://www.placehold.it/200x150/EFEFEF/AAAAAA&text=File+not+found');
+			App::request()->redirect('https://www.placehold.it/200x150/EFEFEF/AAAAAA&text=File+not+found');
 		}
 
 		if ($file->getSize() > 4 * 1024 * 1024) {
-			App::request()->redirect('http://www.placehold.it/200x150/EFEFEF/AAAAAA&text=Image+too+large');
+			App::request()->redirect('https://www.placehold.it/200x150/EFEFEF/AAAAAA&text=Image+too+large');
 		}
 		
 		$this->_thumbHeaders(false, $file->getName());
@@ -84,7 +84,7 @@ trait ThumbControllerTrait {
 		try{
 			$file = $this->thumbGetFile();
 		}catch(Intermesh\Core\Exception\Forbidden $e){
-			App::request()->redirect('http://www.placehold.it/'.$w.'x'.$h.'/EFEFEF/AAAAAA&text=Forbidden');
+			App::request()->redirect('https://www.placehold.it/'.$w.'x'.$h.'/EFEFEF/AAAAAA&text=Forbidden');
 		}
 		
 		
@@ -93,11 +93,11 @@ trait ThumbControllerTrait {
 
 
 		if (!$file || !$file->exists()) {
-			App::request()->redirect('http://www.placehold.it/'.$w.'x'.$h.'/EFEFEF/AAAAAA&text=No+image');
+			App::request()->redirect('https://www.placehold.it/'.$w.'x'.$h.'/EFEFEF/AAAAAA&text=No+image');
 		}
 
 		if ($file->getSize() > 4 * 1024 * 1024) {
-			App::request()->redirect('http://www.placehold.it/'.$w.'x'.$h.'/EFEFEF/AAAAAA&text=Image+too+large');
+			App::request()->redirect('https://www.placehold.it/'.$w.'x'.$h.'/EFEFEF/AAAAAA&text=Image+too+large');
 		}
 		
 		
@@ -133,7 +133,7 @@ trait ThumbControllerTrait {
 		if ($useCache || !$thumbExists || $thumbMtime < $file->getModifiedAt() || $thumbMtime < $file->getCreatedAt()) {
 			$image = Image::newInstance($file->getPath());
 			if (!$image) {
-				App::request()->redirect('http://www.placehold.it/' + $image->getWidth() + 'x' + $image->getHeight() + '/EFEFEF/AAAAAA&text=Could+not+load+image');
+				App::request()->redirect('https://www.placehold.it/' + $image->getWidth() + 'x' + $image->getHeight() + '/EFEFEF/AAAAAA&text=Could+not+load+image');
 			} else {
 				if ($zoomCrop) {
 					$success = $image->zoomcrop($w, $h);
@@ -148,7 +148,7 @@ trait ThumbControllerTrait {
 				}
 
 				if (!$success) {
-					App::request()->redirect('http://www.placehold.it/' + $image->getWidth() + 'x' + $image->getHeight() + '/EFEFEF/AAAAAA&text=Could+not+resize+image');
+					App::request()->redirect('https://www.placehold.it/' + $image->getWidth() + 'x' + $image->getHeight() + '/EFEFEF/AAAAAA&text=Could+not+resize+image');
 				}
 
 				if (!$useCache) {
@@ -156,7 +156,7 @@ trait ThumbControllerTrait {
 					$success = $image->save($readfile);
 
 					if (!$success) {
-						App::request()->redirect('http://www.placehold.it/' + $image->getWidth() + 'x' + $image->getHeight() + '/EFEFEF/AAAAAA&text=Could+not+resize+image');
+						App::request()->redirect('https://www.placehold.it/' + $image->getWidth() + 'x' + $image->getHeight() + '/EFEFEF/AAAAAA&text=Could+not+resize+image');
 					}
 
 					$this->_thumbHeaders($useCache, $file);

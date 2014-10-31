@@ -75,7 +75,7 @@ class RoleController extends AbstractAuthenticationController {
 								->orderBy([$orderColumn => $orderDirection])
 								->limit($limit)
 								->offset($offset)
-								->search($searchQuery, array('t.username', 't.email'))
+								->search($searchQuery, ['t.username'])
 								->joinRelation('userRole')
 								->groupBy(['t.id'])
 								->where(['userRole.roleId' => $roleId])
@@ -100,7 +100,7 @@ class RoleController extends AbstractAuthenticationController {
 								->orderBy([$orderColumn => $orderDirection])
 								->limit($limit)
 								->offset($offset)
-								->search($searchQuery, ['t.username', 't.email'])
+								->search($searchQuery, ['t.username'])
 								->joinAdvanced(
 										UserRole::className(), Criteria::newInstance()
 											->where('t.id = userRole.userId')

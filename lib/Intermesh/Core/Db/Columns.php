@@ -80,7 +80,7 @@ class Columns {
 					case 'bigint':
 						if ($length == 1 && $type == 'tinyint') {
 							$pdoType = PDO::PARAM_BOOL;
-							$default = !isset($field['Default']) ? null : boolval($default);
+							$default = !isset($field['Default']) ? null : (bool) $default;
 						} else {
 							$pdoType = PDO::PARAM_INT;
 							$default = $ai || !isset($field['Default']) ? null : intval($default);

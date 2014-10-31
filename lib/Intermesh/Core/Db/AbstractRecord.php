@@ -264,7 +264,7 @@ abstract class AbstractRecord extends Model {
 					case 'bigint':
 						if ($column->length === 1) {
 							//Boolean fields in mysql are listed at tinyint(1);
-							$this->_attributes[$colName] = boolval($this->_attributes[$colName]);
+							$this->_attributes[$colName] = (bool) $this->_attributes[$colName];
 						} else {
 							// Use floatval because of ints greater then 32 bit? Problem with floatval that ints will set as modified attribute when saving.
 							$this->_attributes[$colName] = intval($this->_attributes[$colName]);

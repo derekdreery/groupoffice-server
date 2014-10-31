@@ -153,8 +153,8 @@ class Role extends AbstractRecord{
 		
 		//return as booleans
 		foreach($models as $model){
-			$model->useAccess = boolval($model->useAccess);		
-			$model->createAccess = boolval($model->createAccess);			
+			$model->useAccess = (bool) $model->useAccess;		
+			$model->createAccess = (bool) $model->createAccess;			
 		}
 
 		return $models;

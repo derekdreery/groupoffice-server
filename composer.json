@@ -18,15 +18,13 @@
 		"ext-iconv": "*",
 		"ext-curl": "*",
 		"ext-pdo": "*",
-		"ext-imap": "*",		
-		
-		"messaged/php-mime-mail-parser": "v1.0.6",
+
 		"flowjs/flow-php-server": "*"
 		
 
 	},
 	"require-dev": {
-		"phpunit/phpunit": "~4.1.1"
+
 	},
 	"autoload": {
 		"psr-4": {
