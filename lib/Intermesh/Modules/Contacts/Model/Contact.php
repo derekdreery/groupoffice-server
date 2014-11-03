@@ -108,6 +108,10 @@ class Contact extends AbstractRecord{
 			return new File(self::getPhotosFolder().'/'.$this->photoFilePath);
 		}
 	}
+	
+	public function getThumbUrl(){
+		return App::router()->buildUrl("intermesh/contacts/contact/thumb", ['contactId' => $this->id, 'modifiedAt' => $this->modifiedAt]);
+	}
 
 	/**
 	 * Set a photo

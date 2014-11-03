@@ -64,7 +64,7 @@ trait ThumbControllerTrait {
 			App::request()->redirect('https://www.placehold.it/200x150/EFEFEF/AAAAAA&text=Image+too+large');
 		}
 		
-		$this->_thumbHeaders(false, $file->getName());
+		$this->_thumbHeaders(false, $file);
 		$file->output();
 	}
 	
