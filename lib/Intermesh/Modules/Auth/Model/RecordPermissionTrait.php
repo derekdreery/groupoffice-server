@@ -325,5 +325,5 @@ trait RecordPermissionTrait {
 		}
 		
 		return $record;
-	}
+	}	
 }

@@ -5,7 +5,7 @@ namespace Intermesh\Core;
 use Intermesh\Core\Cache\Disk;
 use Intermesh\Core\Db\Connection;
 use Intermesh\Core\Http\Request;
-use Intermesh\Core\Http\Router;
+use Intermesh\Core\REST\Router;
 
 /**
  * App singleton class with services
@@ -65,6 +65,7 @@ class App {
 
 		//register our custom error handler here
 		error_reporting(E_ALL | E_STRICT);
+//		ini_set('display_errors', 'on');
 		set_error_handler(array('\Intermesh\Core\App', 'errorHandler'));
 		register_shutdown_function(array('\Intermesh\Core\App', 'shutdown'));
 
@@ -164,15 +165,17 @@ class App {
 		}
 		$errorMsg .= "----------------";
 
-		self::debug($errorMsg);
+		self::debug($errorMsg, 'errors');
 //		\GO::logError($errorMsg);	
 //		foreach(self::$_errorLogCallbacks as $callback){
 //			call_user_func($callback, $errorMsg);
 //		}
 
 		if (self::debugger()->enabled) {
-			echo nl2br($errorMsg);
+			echo $errorMsg;
 		}
+		
+//		throw new \Exception($errorMessage);
 
 		/* Execute PHP internal error handler too */
 		return false;

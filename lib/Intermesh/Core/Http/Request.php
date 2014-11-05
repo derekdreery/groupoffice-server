@@ -23,7 +23,14 @@ class Request {
 	 * @var array
 	 */
 	public $post;
+
+	/**
+	 *
+	 * @var array 
+	 */
+	public $payload;
 	
+		
 	/**
 	 *
 	 * @var array
@@ -31,14 +38,19 @@ class Request {
 	public $get;
 
 	public function __construct() {
-		if($this->isJson() && $this->isPost()){
-			$this->post = json_decode(file_get_contents('php://input'), true);
-
+		if($this->isJson()){
+			
+			$rawPayload = file_get_contents('php://input');
+			
+//			var_dump($rawPayload);
+			
+			$this->payload = json_decode($rawPayload, true);
+					
 			// Check if the post is filled with an array. Otherwise make it an empty array.
-			if(!is_array($this->post)){
+			if(!is_array($this->payload)){
 				//$this->post = array();
 				
-				throw new Exception("Malformed JSON posted");
+				throw new \Exception("Malformed JSON posted: \n\n".var_export($rawPayload, true));
 			}
 
 		}else
@@ -48,6 +60,7 @@ class Request {
 
 		$this->get=$_GET;
 	}	
+
 
 	/**
 	 * Get's the content type header
@@ -60,6 +73,15 @@ class Request {
 		} else {
 			return isset($_SERVER["CONTENT_TYPE"]) ? $_SERVER["CONTENT_TYPE"] : '';
 		}
+	}
+	
+	/**
+	 * Get the request method
+	 * 
+	 * @return string PUT, POST, DELETE, GET, PATCH, HEAD
+	 */
+	public function getMethod(){
+		return strtoupper($_SERVER['REQUEST_METHOD']);
 	}
 
 	/**

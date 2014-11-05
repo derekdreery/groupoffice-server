@@ -37,4 +37,8 @@ class Item extends AbstractRecord {
 			$r->belongsTo('imapMessage', Message::className(), 'imapMessageId')
 			];
 	}
+	
+	public function getAuthorThumbUrl(){
+		return $this->owner->contact->getThumbUrl();
+	}
 }

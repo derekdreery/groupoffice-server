@@ -71,4 +71,11 @@ class Connection extends AbstractObject{
 		$this->_pdo = null;				
 		$this->_pdo = new PDO("mysql:host=$this->host;dbname=$this->database;port=$this->port", $this->user, $this->pass, $this->options);
 	}	
+	
+	/**
+	 * UNLOCK TABLES explicitly releases any table locks held by the current session
+	 */
+	public function unlockTables(){
+		return $this->_pdo->query("UNLOCK TABLES");
+	}
 }

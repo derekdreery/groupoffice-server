@@ -3,10 +3,10 @@
 namespace Intermesh\Modules\CustomFields\Controller;
 
 use Intermesh\Core\App;
+use Intermesh\Core\Controller\AbstractRESTController;
 use Intermesh\Core\Data\Store;
 use Intermesh\Core\Db\Query;
 use Intermesh\Core\Exception\NotFound;
-use Intermesh\Modules\Auth\Controller\AbstractAuthenticationController;
 use Intermesh\Modules\CustomFields\Model\Field;
 use Intermesh\Modules\CustomFields\Model\FieldSet;
 
@@ -17,7 +17,22 @@ use Intermesh\Modules\CustomFields\Model\FieldSet;
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-class FieldSetController extends AbstractAuthenticationController {
+class FieldSetController extends AbstractRESTController {
+	
+	
+	protected function httpGet($fieldSetId = null, $returnAttributes = []){
+		if(!isset($fieldSetId)){
+			return $this->callMethodWithParams('store');
+		}  else {
+			$fieldset = FieldSet::findByPk($fieldSetId);
+
+			if (!$fieldset) {
+				return $this->renderError(404);					
+			}
+			
+			return $this->renderModel($fieldset, $returnAttributes);
+		}
+	}
 
 
 	/**
@@ -31,29 +46,23 @@ class FieldSetController extends AbstractAuthenticationController {
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return array JSON Model data
 	 */
-	public function actionStore($orderColumn = 'sortOrder', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "", $returnAttributes = [], $where=null) {
+	protected function store($modelName, $orderColumn = 'sortOrder', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "", $returnAttributes = []) {
 
 
 		$query = Query::newInstance()
 				->orderBy([$orderColumn => $orderDirection])
 				->limit($limit)
 				->offset($offset)
-				->search($searchQuery, ['name']);
+				->search($searchQuery, ['name'])
+				->where(['modelName' => $modelName]);
 				
-		if(!empty($where)){
-			$where = json_decode($where, true);
-			
-			if(!empty($where)){
-				$query->whereSafe($where);
-			}
-		}
-
+		
 		$fieldsets = FieldSet::find($query);
 
 		$store = new Store($fieldsets);
 		$store->setReturnAttributes($returnAttributes);
 
-		echo $this->view->render('store', $store);
+		return $this->renderStore($store);
 	}
 
 	/**
@@ -69,16 +78,14 @@ class FieldSetController extends AbstractAuthenticationController {
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return JSON Model data
 	 */
-	public function actionCreate($modelName='', $returnAttributes = []) {
+	public function httpPost($modelName='', $returnAttributes = []) {
 
 		$fieldset = new FieldSet();
 		$fieldset->modelName = $modelName;
 
-		if (isset(App::request()->post['fieldset'])) {
-			$fieldset->setAttributes(App::request()->post['fieldset']['attributes']);
-
-			$fieldset->save();
-		}
+		$fieldset->setAttributes(App::request()->payload['data']['attributes']);
+		$fieldset->save();
+		
 
 		echo $this->view->render('form', array('fieldset' => $fieldset, 'returnAttributes' => $returnAttributes));
 	}
@@ -93,24 +100,23 @@ class FieldSetController extends AbstractAuthenticationController {
 	 * {"fieldset":{"attributes":{"fieldsetname":"test",...}}}
 	 * </code>
 	 * 
-	 * @param int $id The ID of the fieldset
+	 * @param int $fieldSetId The ID of the fieldset
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return JSON Model data
 	 * @throws NotFound
 	 */
-	public function actionUpdate($id, $returnAttributes = []) {
+	public function httpPut($fieldSetId, $returnAttributes = []) {
 
-		$fieldset = FieldSet::findByPk($id);
+		$fieldset = FieldSet::findByPk($fieldSetId);
 
 		if (!$fieldset) {
-			throw new NotFound();
+			return $this->renderError(404);
 		}
 
-		if (isset(App::request()->post['fieldset'])) {
-			$fieldset->setAttributes(App::request()->post['fieldset']['attributes']);
-			$fieldset->save();
-		}
-		echo $this->view->render('form', array('fieldset' => $fieldset, 'returnAttributes' => $returnAttributes));
+		$fieldset->setAttributes(App::request()->payload['data']['attributes']);
+		$fieldset->save();
+		
+		return $this->renderModel($fieldSet);
 	}
 
 	/**
@@ -119,16 +125,16 @@ class FieldSetController extends AbstractAuthenticationController {
 	 * @param int $id
 	 * @throws NotFound
 	 */
-	public function actionDelete($id) {
+	public function httpDelete($id) {
 		$fieldset = FieldSet::findByPk($id);
 
 		if (!$fieldset) {
-			throw new NotFound();
+			return $this->renderError(404);
 		}
 
 		$fieldset->delete();
 
-		echo $this->view->render('delete', array('fieldset' => $fieldset));
+		return $this->renderModel($field);
 	}
 	
 	

@@ -13,16 +13,20 @@ use Intermesh\Core\Controller\AbstractController;
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-class AuthController extends AbstractController{
+class AuthController extends \Intermesh\Core\Controller\AbstractRESTController{
+	
+	protected function authenticate() {
+		return true;
+	}
 
 	/**
 	 * Logs the current user out.
 	 */
-	public function actionLogout(){
+	protected function httpDelete(){
 
 		App::session()->end();
-		echo $this->view->render('json', array('success'=>true));
-
+		
+		return $this->renderJson(['success' => true]);
 	}
 
 	/**
@@ -39,24 +43,27 @@ class AuthController extends AbstractController{
 	 *
 	 * @returns JSON {"userId": "Current ID of user", "securityToken": "token required in each request"}
 	 */
-	public function actionLogin(){
-
-		$user = User::login(App::request()->post['username'], App::request()->post['password']);
+	public function httpPost(){
 		
-		$response = array(
+		
+		$user = User::login(App::request()->payload['username'], App::request()->payload['password']);
+		
+		$response = [
 				'success'=>$user!==false
-		);
+		];
 
 		if($response['success']){	
 			//todo remember for different clients
-			if(App::request()->post['remember']){				
+			if(App::request()->payload['remember']){				
 				Token::generateSeries($user->id);				
 			}
+			
+			return $this->renderJson($response);
 		}else
 		{
-			$response['errors']=array('badlogin');
+			return $this->renderError(401);
 		}
 
-		echo $this->view->render('json', $response);
+		
 	}
 }

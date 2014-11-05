@@ -52,6 +52,8 @@ trait RecordFolderTrait{
 			$folder = File::findByPath($this->getFolderPath());			
 		}
 		
+		\Intermesh\Core\App::dbConnection()->unlockTables();
+		
 		return $folder;
 	}	
 }

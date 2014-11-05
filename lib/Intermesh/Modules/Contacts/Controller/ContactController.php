@@ -3,15 +3,12 @@
 namespace Intermesh\Modules\Contacts\Controller;
 
 use Intermesh\Core\App;
-use Intermesh\Core\Controller\CrudControllerInterface;
+use Intermesh\Core\Controller\AbstractRESTController;
 use Intermesh\Core\Data\Store;
 use Intermesh\Core\Db\Query;
-use Intermesh\Core\Exception\Forbidden;
 use Intermesh\Core\Exception\NotFound;
-use Intermesh\Modules\Auth\Controller\AbstractAuthenticationController;
-use Intermesh\Modules\Auth\Model\User;
 use Intermesh\Modules\Contacts\Model\Contact;
-use Intermesh\Modules\Upload\Controller\ThumbControllerTrait;
+use Intermesh\Modules\Modules\Model\Module;
 
 /**
  * The controller for address books
@@ -20,53 +17,57 @@ use Intermesh\Modules\Upload\Controller\ThumbControllerTrait;
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-class ContactController extends AbstractAuthenticationController implements CrudControllerInterface {
+class ContactController extends AbstractRESTController {
+	
 
-	protected $checkModulePermision = true;
+//	protected $checkModulePermision = true;
+//
+//	use ThumbControllerTrait;
+//
+//	protected function thumbGetFile() {
+//
+//		$contact = false;
+//
+//		if (isset($_GET['userId'])) {
+//			$user = User::findByPk($_GET['userId']);
+//
+//			if ($user) {
+//				$contact = $user->contact;
+//			}
+//		} else if (isset($_GET['contactId'])) {
+//			$contact = Contact::findByPk($_GET['contactId']);
+//		} elseif (isset($_GET['email'])) {
+//
+//			$query = Query::newInstance()
+//					->joinRelation('emailAddresses')
+//					->groupBy(['t.id'])
+//					->where(['emailAddresses.email' => $_GET['email']]);
+//
+//			$contact = Contact::findPermitted($query, 'readAccess')->single();
+//		}
+//
+//
+//		if ($contact) {
+//
+//			if (!$contact->checkPermission('readAccess')) {
+//
+//
+//				throw new Forbidden();
+//			}
+//
+//			return $contact->getPhotoFile();
+//		}
+//
+//
+//		return false;
+//	}
 
-	use ThumbControllerTrait;
-
-	protected function thumbGetFile() {
-
-		$contact = false;
-
-		if (isset($_GET['userId'])) {
-			$user = User::findByPk($_GET['userId']);
-
-			if ($user) {
-				$contact = $user->contact;
-			}
-		} else if (isset($_GET['contactId'])) {
-			$contact = Contact::findByPk($_GET['contactId']);
-		} elseif (isset($_GET['email'])) {
-
-			$query = Query::newInstance()
-					->joinRelation('emailAddresses')
-					->groupBy(['t.id'])
-					->where(['emailAddresses.email' => $_GET['email']]);
-
-			$contact = Contact::findPermitted($query, 'readAccess')->single();
-		}
-
-
-		if ($contact) {
-
-			if (!$contact->checkPermission('readAccess')) {
-
-
-				throw new Forbidden();
-			}
-
-			return $contact->getPhotoFile();
-		}
-
-
-		return false;
-	}
-
-	protected function thumbUseCache() {
-		return true;
-	}
+//	protected function thumbUseCache() {
+//		return true;
+//	}
+	
+	
+	
 
 	/**
 	 * Fetch contacts
@@ -79,7 +80,7 @@ class ContactController extends AbstractAuthenticationController implements Crud
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return array JSON Model data
 	 */
-	public function actionStore($orderColumn = 'name', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "", $returnAttributes = [], $where = null) {
+	public function store($orderColumn = 'name', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "", $returnAttributes = [], $where = null) {
 
 		$query = Query::newInstance()
 				->orderBy([$orderColumn => $orderDirection])
@@ -107,143 +108,151 @@ class ContactController extends AbstractAuthenticationController implements Crud
 		$store = new Store($contacts);
 		$store->setReturnAttributes($returnAttributes);
 
-		echo $this->view->render('store', $store);
+		return $this->renderStore($store);
 	}
-
+	
+	
 	/**
-	 * Create a new contact. Use GET to fetch the default attributes or POST to add a new contact.
+	 * GET a list of contacts or fetch a single contact
 	 *
-	 * The attributes of this contact should be posted as JSON in a contact object
+	 * The attributes of this contact should be posted as JSON in a role object
 	 *
 	 * <p>Example for POST and return data:</p>
 	 * <code>
-	 * {"contact":{"attributes":{"contactname":"test",...}}}
+	 * {"data":{"attributes":{"name":"test",...}}}
 	 * </code>
 	 * 
-	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. *,emailAddresses.*. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
+	 * @param int $contactId The ID of the role
+	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return JSON Model data
 	 */
-	public function actionCreate($returnAttributes = []) {
+	protected function httpGet($contactId = null, $returnAttributes = []){
+		if(!isset($contactId)){
+			return $this->callMethodWithParams('store');
+		}  else {
+			
+			if($contactId == 0){
+				$contact = new Contact();
+			}else
+			{
+				$contact = Contact::findByPk($contactId);
+				
+				if (!$contact->checkPermission('readAccess')) {
+					return $this->renderError(403);
+				}
+			}
 
-		$contact = new Contact();
-
-		if (isset(App::request()->post['contact'])) {
-			$contact->setAttributes(App::request()->post['contact']['attributes']);
-
-			$contact->save();
+			if (!$contact) {
+				return $this->renderError(404);					
+			}
+			
+			return $this->renderModel($contact, $returnAttributes);
 		}
-
-		echo $this->view->render('form', array('contact' => $contact, 'returnAttributes' => $returnAttributes));
 	}
 
+	
 	/**
-	 * Get a contact
-	 * 
-	 * @param int $id
-	 * @param array $returnAttributes
-	 * @throws NotFound
-	 * @throws Forbidden
-	 */
-	public function actionRead($id, $returnAttributes = []) {
-		$contact = Contact::findByPk($id);
-
-		if (!$contact) {
-			throw new NotFound();
-		}
-
-		if (!$contact->checkPermission('readAccess')) {
-			throw new Forbidden();
-		}
-
-
-		echo $this->view->render(
-				'read', [
-			'contact' => $contact,
-			'returnAttributes' => $returnAttributes
-				]
-		);
-	}
-
-	/**
-	 * Update a contact. Use GET to fetch the default attributes or POST to add a new contact.
+	 * Create a new field. Use GET to fetch the default attributes or POST to add a new field.
 	 *
-	 * The attributes of this contact should be posted as JSON in a contact object
+	 * The attributes of this field should be posted as JSON in a field object
 	 *
 	 * <p>Example for POST and return data:</p>
 	 * <code>
-	 * {"contact":{"attributes":{"contactname":"test",...}}}
+	 * {"field":{"attributes":{"fieldname":"test",...}}}
 	 * </code>
 	 * 
-	 * @param int $id The ID of the contact
+	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
+	 * @return JSON Model data
+	 */
+	public function httpPost($returnAttributes = []) {
+		
+		
+		if (!Module::find(['name' => 'contact'])->single()->checkPermission('createAccess')) {
+			return $this->renderError(403);
+		}
+
+
+		$field = new Contact();
+		
+
+		$field->setAttributes(App::request()->payload['data']['attributes']);
+
+		$field->save();
+		
+
+		return $this->renderModel($field, $returnAttributes);
+	}
+
+	/**
+	 * Update a field. Use GET to fetch the default attributes or POST to add a new field.
+	 *
+	 * The attributes of this field should be posted as JSON in a field object
+	 *
+	 * <p>Example for POST and return data:</p>
+	 * <code>
+	 * {"field":{"attributes":{"fieldname":"test",...}}}
+	 * </code>
+	 * 
+	 * @param int $id The ID of the field
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return JSON Model data
 	 * @throws NotFound
 	 */
-	public function actionUpdate($id, $returnAttributes = []) {
+	public function httpPut($id, $returnAttributes = []) {
 
 		$contact = Contact::findByPk($id);
 
 		if (!$contact) {
-			throw new NotFound();
+			return $this->renderError(404);
+		}
+		
+		if (!$contact->checkPermission('editAccess')) {
+			return $this->renderError(403);
 		}
 
-		if (isset(App::request()->post['contact'])) {
-			if (!$contact->checkPermission('editAccess')) {
-				throw new Forbidden();
-			}
-			$contact->setAttributes(App::request()->post['contact']['attributes']);
-			$contact->save();
-		} else {
-			if (!$contact->checkPermission('readAccess')) {
-				throw new Forbidden();
-			}
-		}
-
-		echo $this->view->render(
-				'form', [
-			'contact' => $contact,
-			'returnAttributes' => $returnAttributes
-				]
-		);
+		$contact->setAttributes(App::request()->payload['data']['attributes']);
+		$contact->save();
+		
+		return $this->renderModel($contact, $returnAttributes);
 	}
 
 	/**
-	 * Delete a contact
+	 * Delete a field
 	 *
 	 * @param int $id
 	 * @throws NotFound
 	 */
-	public function actionDelete($id) {
+	public function httpDelete($id) {
 		$contact = Contact::findByPk($id);
 
 		if (!$contact) {
-			throw new NotFound();
+			return $this->renderError(404);
 		}
-
+		
 		if (!$contact->checkPermission('deleteAccess')) {
-			throw new Forbidden();
+			return $this->renderError(403);
 		}
 
 		$contact->delete();
 
-		echo $this->view->render('delete', array('contact' => $contact));
+		return $this->renderModel($contact);
 	}
 
-	public function actionCreateLots() {
-
-		header('Content-Type: text/plain');
-
-		ini_set('max_execution_time', 0);
-
-		for ($i = 1000; $i < 10000; $i++) {
-			$contact = new Contact();
-			$contact->firstName = 'test';
-			$contact->lastName = $i;
-			$contact->save();
-
-			echo $i . "\n";
-			flush();
-		}
-	}
+//	public function actionCreateLots() {
+//
+//		header('Content-Type: text/plain');
+//
+//		ini_set('max_execution_time', 0);
+//
+//		for ($i = 1000; $i < 10000; $i++) {
+//			$contact = new Contact();
+//			$contact->firstName = 'test';
+//			$contact->lastName = $i;
+//			$contact->save();
+//
+//			echo $i . "\n";
+//			flush();
+//		}
+//	}
 
 }

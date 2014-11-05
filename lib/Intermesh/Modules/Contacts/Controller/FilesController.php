@@ -16,8 +16,8 @@ use Intermesh\Modules\Files\Controller\AbstractFilesController;
 class FilesController extends AbstractFilesController{
 	
 	
-	protected function getModel($modelId){
-		return Contact::findByPk($modelId);
+	protected function getModel(){
+		return Contact::findByPk($this->router->routeParams['contactId']);
 
 	}
 

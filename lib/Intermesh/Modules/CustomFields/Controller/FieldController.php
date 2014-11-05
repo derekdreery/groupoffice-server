@@ -3,10 +3,10 @@
 namespace Intermesh\Modules\CustomFields\Controller;
 
 use Intermesh\Core\App;
+use Intermesh\Core\Controller\AbstractRESTController;
 use Intermesh\Core\Data\Store;
 use Intermesh\Core\Db\Query;
 use Intermesh\Core\Exception\NotFound;
-use Intermesh\Modules\Auth\Controller\AbstractAuthenticationController;
 use Intermesh\Modules\CustomFields\Model\Field;
 
 /**
@@ -16,9 +16,27 @@ use Intermesh\Modules\CustomFields\Model\Field;
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-class FieldController extends AbstractAuthenticationController {
+class FieldController extends AbstractRESTController {
 
+	protected function httpGet($fieldId = null, $returnAttributes = []){
+		if(!isset($fieldId)){
+			return $this->callMethodWithParams('store');
+		}  else {
+			
+			if($fieldId == 0){
+				$field = new Field();
+			}else
+			{
+				$field = Field::findByPk($fieldId);
+			}
 
+			if (!$field) {
+				return $this->renderError(404);					
+			}
+			
+			return $this->renderModel($field, $returnAttributes);
+		}
+	}
 	/**
 	 * Fetch fields
 	 *
@@ -30,7 +48,7 @@ class FieldController extends AbstractAuthenticationController {
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return array JSON Model data
 	 */
-	public function actionStore($orderColumn = 'sortOrder', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "", $returnAttributes = [], $where=null) {
+	protected function store($orderColumn = 'sortOrder', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "", $returnAttributes = [], $where=null) {
 
 
 		$query = Query::newInstance()
@@ -49,29 +67,9 @@ class FieldController extends AbstractAuthenticationController {
 		$store = new Store($fields);
 		$store->setReturnAttributes($returnAttributes);
 
-		echo $this->view->render('store', $store);
+		return $this->renderStore($store);
 	}
 	
-	public function actionSaveSort(){		
-			
-		$sortOrder = App::request()->post['sortOrder'];
-
-		$index = count($sortOrder);
-
-		foreach (App::request()->post['sortOrder'] as $key){
-			$field = Field::findByPk($key);
-
-			if($field){
-				$field->sortOrder = $index;
-				$field->save();
-			}
-			$index++;
-		}
-
-		$response = array('success'=>true);
-
-		echo $this->view->render('json', $response);		
-	}
 
 	/**
 	 * Create a new field. Use GET to fetch the default attributes or POST to add a new field.
@@ -86,18 +84,17 @@ class FieldController extends AbstractAuthenticationController {
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return JSON Model data
 	 */
-	public function actionCreate($fieldSetId = 0, $returnAttributes = []) {
+	public function httpPost($fieldSetId, $returnAttributes = []) {
 
 		$field = new Field();
 		$field->fieldSetId = $fieldSetId;
 
-		if (isset(App::request()->post['field'])) {
-			$field->setAttributes(App::request()->post['field']['attributes']);
+		$field->setAttributes(App::request()->payload['data']['attributes']);
 
-			$field->save();
-		}
+		$field->save();
+		
 
-		echo $this->view->render('form', array('field' => $field, 'returnAttributes' => $returnAttributes));
+		return $this->renderModel($field, $returnAttributes);
 	}
 
 	/**
@@ -115,19 +112,18 @@ class FieldController extends AbstractAuthenticationController {
 	 * @return JSON Model data
 	 * @throws NotFound
 	 */
-	public function actionUpdate($id, $returnAttributes = []) {
+	public function httpPut($id, $returnAttributes = []) {
 
 		$field = Field::findByPk($id);
 
 		if (!$field) {
-			throw new NotFound();
+			return $this->renderError(404);
 		}
 
-		if (isset(App::request()->post['field'])) {
-			$field->setAttributes(App::request()->post['field']['attributes']);
-			$field->save();
-		}
-		echo $this->view->render('form', array('field' => $field, 'returnAttributes' => $returnAttributes));
+		$field->setAttributes(App::request()->payload['data']['attributes']);
+		$field->save();
+		
+		return $this->renderModel($field, $returnAttributes);
 	}
 
 	/**
@@ -136,15 +132,15 @@ class FieldController extends AbstractAuthenticationController {
 	 * @param int $id
 	 * @throws NotFound
 	 */
-	public function actionDelete($id) {
+	public function httpDelete($id) {
 		$field = Field::findByPk($id);
 
 		if (!$field) {
-			throw new NotFound();
+			return $this->renderError(404);
 		}
 
 		$field->delete();
 
-		echo $this->view->render('delete', array('field' => $field));
+		return $this->renderModel($field);
 	}
 }

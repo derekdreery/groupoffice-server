@@ -42,6 +42,9 @@ class Field extends AbstractRecord {
 	
 	const TYPE_NUMBER = "number";
 	
+	
+	public $resort = false;
+	
 
 	protected static function defineRelations(RelationFactory $r) {
 		return [
@@ -179,18 +182,54 @@ class Field extends AbstractRecord {
 		return parent::validate();
 	}
 	
+	private function _resort(){		
+		
+		if($this->resort) {			
+
+			$fields = $this->fieldSet->fields;
+			
+
+			$sortOrder = 0;
+			foreach($fields as $field){
+				
+				$sortOrder++;
+
+				if($sortOrder == $this->sortOrder){
+					$sortOrder++;
+				}
+
+				//skip this model
+				if($field->id == $this->id){					
+					continue;
+				}
+
+				$field->sortOrder = $sortOrder;				
+				$field->save();
+			}
+		}		
+	}
+	
 	public function save() {
 		
-		App::dbConnection()->getPDO()->beginTransaction();
+		
+		$startTrans = $this->isModified(['databaseName','defaultValue', '_data','type']);
+		
+		if($startTrans){
+			App::dbConnection()->getPDO()->beginTransaction();
+		}
 		
 		try {
 			$this->_alterDatabase();
+			
+			$this->_resort();
 
 			$success = parent::save();
 		
 		} catch (Exception $ex) {
 			
-			App::dbConnection()->getPDO()->rollBack();
+			if($startTrans){
+				App::dbConnection()->getPDO()->rollBack();
+			}
 			
 			$this->setValidationError('databaseName', $ex->getMessage());
 			
@@ -199,7 +238,9 @@ class Field extends AbstractRecord {
 			return false;
 		}
 		
-		App::dbConnection()->getPDO()->commit();
+		if($startTrans){
+			App::dbConnection()->getPDO()->commit();
+		}
 		
 		
 		return $success;

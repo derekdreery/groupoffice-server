@@ -2,13 +2,13 @@
 
 namespace Intermesh\Modules\CustomFields\Controller;
 
-use Intermesh\Modules\Auth\Controller\AbstractAuthenticationController;
+use Intermesh\Core\Controller\AbstractRESTController;
 use Intermesh\Modules\Modules\ModuleUtils;
 
-class ModelController extends AbstractAuthenticationController{
+class ModelController extends AbstractRESTController{
 	
 	
-	public function actionGetModelNames() {
+	protected function httpGet() {
 		
 		$modelClasses = ModuleUtils::getModelNames();
 		
@@ -20,9 +20,6 @@ class ModelController extends AbstractAuthenticationController{
 			}
 		}
 		
-		echo $this->view->render('json', ['results' => $customFieldModels, 'success' => true]);
+		return $this->renderJson(['results' => $customFieldModels, 'success' => true]);
 	}
-	
-	
-	
 }

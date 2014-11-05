@@ -7,6 +7,7 @@ use Intermesh\Core\Db\RelationFactory;
 use Intermesh\Core\Db\SoftDeleteTrait;
 use Intermesh\Core\Fs\File;
 use Intermesh\Core\Fs\Folder;
+use Intermesh\Core\REST\RESTModelInterface;
 use Intermesh\Modules\Auth\Model\RecordPermissionTrait;
 use Intermesh\Modules\Auth\Model\Role;
 use Intermesh\Modules\Auth\Model\User;
@@ -36,7 +37,7 @@ use Intermesh\Modules\Timeline\Model\Item;
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-class Contact extends AbstractRecord{
+class Contact extends AbstractRecord {
 	
 	use RecordPermissionTrait;
 	
@@ -110,7 +111,10 @@ class Contact extends AbstractRecord{
 	}
 	
 	public function getThumbUrl(){
-		return App::router()->buildUrl("intermesh/contacts/contact/thumb", ['contactId' => $this->id, 'modifiedAt' => $this->modifiedAt]);
+		
+		//Added modified at so browser will reload when dynamically changed with js
+		return App::router()->buildUrl("contacts/".$this->id."/thumb", ['modifiedAt' => $this->modifiedAt]); 
+		
 	}
 
 	/**
@@ -204,6 +208,5 @@ class Contact extends AbstractRecord{
 		return $this;
 
 	}
-	
-	
+
 }

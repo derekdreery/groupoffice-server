@@ -169,6 +169,17 @@ class File extends AbstractRecord {
 		$this->size = $file->getSize();
 		$this->contentType = $file->getContentType();
 	}
+	
+	/**
+	 * Set a temporary file
+	 *
+	 * @param string $tempFilePath
+	 */
+	public function setTempPath($tempFilePath) {		
+		$file = new FsFile(App::session()->getTempFolder().'/'.$tempFilePath);
+		
+		$this->setFile($file);
+	}
 
 	public function save() {
 

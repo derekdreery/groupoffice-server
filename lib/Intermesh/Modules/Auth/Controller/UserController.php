@@ -2,16 +2,15 @@
 
 namespace Intermesh\Modules\Auth\Controller;
 
-use Intermesh\Modules\Auth\Controller\AbstractAuthenticationController;
-use Intermesh\Modules\Auth\Model\Role;
-use Intermesh\Modules\Auth\Model\User;
-use Intermesh\Modules\Auth\Model\UserRole;
 use Intermesh\Core\App;
+use Intermesh\Core\Controller\AbstractRESTController;
 use Intermesh\Core\Data\Store;
 use Intermesh\Core\Db\Criteria;
 use Intermesh\Core\Db\Query;
-use Intermesh\Core\Exception\Forbidden;
 use Intermesh\Core\Exception\NotFound;
+use Intermesh\Modules\Auth\Model\Role;
+use Intermesh\Modules\Auth\Model\User;
+use Intermesh\Modules\Auth\Model\UserRole;
 
 /**
  * The controller for users. Admin role is required.
@@ -20,15 +19,11 @@ use Intermesh\Core\Exception\NotFound;
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-class UserController extends AbstractAuthenticationController {
+class UserController extends AbstractRESTController {
 
-	public function __construct() {
 
-		parent::__construct();
-
-		if (!User::current()->isAdmin()) {
-			throw new Forbidden();
-		}
+	protected function authenticate() {
+		return parent::authenticate() && User::current()->isAdmin();
 	}
 
 	/**
@@ -42,7 +37,7 @@ class UserController extends AbstractAuthenticationController {
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return array JSON Model data
 	 */
-	public function actionStore($orderColumn = 'username', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "", $returnAttributes = []) {
+	protected function store($orderColumn = 'username', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "", $returnAttributes = []) {
 
 		$users = User::find(Query::newInstance()
 								->orderBy([$orderColumn => $orderDirection])
@@ -54,107 +49,117 @@ class UserController extends AbstractAuthenticationController {
 		$store = new Store($users);
 		$store->setReturnAttributes($returnAttributes);
 
-		echo $this->view->render('store', $store);
+		return $this->renderStore($store);
 	}
 
 	/**
-	 * Create a new user. Use GET to fetch the default attributes or POST to add a new user.
+	 * GET a list of users or fetch a single user
 	 *
-	 * The attributes of this user should be posted as JSON in a user object
+	 * The attributes of this user should be posted as JSON in a role object
 	 *
 	 * <p>Example for POST and return data:</p>
 	 * <code>
-	 * {"user":{"attributes":{"username":"test",...}}}
+	 * {"data":{"attributes":{"name":"test",...}}}
+	 * </code>
+	 * 
+	 * @param int $userId The ID of the role
+	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
+	 * @return JSON Model data
+	 */
+	protected function httpGet($userId = null, $returnAttributes = []){
+		if(!isset($userId)){
+			return $this->callMethodWithParams('store');
+		}  else {
+			
+			if($userId == 0){
+				$user = new User();
+			}else
+			{
+				$user = User::findByPk($userId);
+			}
+
+			if (!$user) {
+				return $this->renderError(404);					
+			}
+			
+			return $this->renderModel($user, $returnAttributes);
+		}
+	}
+
+	
+	/**
+	 * Create a new field. Use GET to fetch the default attributes or POST to add a new field.
+	 *
+	 * The attributes of this field should be posted as JSON in a field object
+	 *
+	 * <p>Example for POST and return data:</p>
+	 * <code>
+	 * {"data":{"attributes":{"fieldname":"test",...}}}
 	 * </code>
 	 * 
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return JSON Model data
 	 */
-	public function actionCreate($returnAttributes = []) {
+	public function httpPost($returnAttributes = []) {
 
 		$user = new User();
-		if (isset(App::request()->post['user'])) {
-			$user->setAttributes(App::request()->post['user']['attributes']);
-			$user->save();
-		}
-		echo $this->view->render('form', array('user' => $user, 'returnAttributes' => $returnAttributes));
+		
+
+		$user->setAttributes(App::request()->payload['data']['attributes']);
+
+		$user->save();
+		
+
+		return $this->renderModel($user, $returnAttributes);
 	}
-	
-	
+
 	/**
-	 * Read a user. 
+	 * Update a field. Use GET to fetch the default attributes or POST to add a new field.
 	 *
-	 * The attributes of this user should be posted as JSON in a user object
+	 * The attributes of this field should be posted as JSON in a field object
 	 *
 	 * <p>Example for POST and return data:</p>
 	 * <code>
-	 * {"user":{"attributes":{"username":"test",...}}}
+	 * {"data":{"attributes":{"fieldname":"test",...}}}
 	 * </code>
 	 * 
-	 * @param int $id The ID of the user
+	 * @param int $userId The ID of the field
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return JSON Model data
 	 * @throws NotFound
 	 */
-	public function actionRead($id, $returnAttributes) {
+	public function httpPut($userId, $returnAttributes = []) {
 
-		$user = User::findByPk($id);
+		$user = User::findByPk($userId);
 
 		if (!$user) {
-			throw new NotFound();
+			return $this->renderError(404);
 		}
 
-		echo $this->view->render('form', array('user' => $user, 'returnAttributes' => $returnAttributes));
+		$user->setAttributes(App::request()->payload['data']['attributes']);
+		$user->save();
+		
+		return $this->renderModel($user, $returnAttributes);
 	}
 
 	/**
-	 * Update a user. Use GET to fetch the default attributes or POST to add a new user.
+	 * Delete a field
 	 *
-	 * The attributes of this user should be posted as JSON in a user object
-	 *
-	 * <p>Example for POST and return data:</p>
-	 * <code>
-	 * {"user":{"attributes":{"username":"test",...}}}
-	 * </code>
-	 * 
-	 * @param int $id The ID of the user
-	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
-	 * @return JSON Model data
+	 * @param int $userId
 	 * @throws NotFound
 	 */
-	public function actionUpdate($id, $returnAttributes) {
-
-		$user = User::findByPk($id);
-
-		if (!$user) {
-			throw new NotFound();
-		}
-
-		if (isset(App::request()->post['user'])) {
-			$user->setAttributes(App::request()->post['user']['attributes']);
-			$user->save();
-		}
-		echo $this->view->render('form', array('user' => $user, 'returnAttributes' => $returnAttributes));
-	}
-
-	/**
-	 * Delete a user
-	 *
-	 * @param int $id
-	 * @throws NotFound
-	 */
-	public function actionDelete($id) {
-		$user = User::findByPk($id);
+	public function httpDelete($userId) {
+		$user = User::findByPk($userId);
 
 		if (!$user) {
-			throw new NotFound();
+			return $this->renderError(404);
 		}
 
 		$user->delete();
 
-		echo $this->view->render('delete', array('user' => $user));
+		return $this->renderModel($user);
 	}
-
+	
 	/**
 	 * Fetch all roles that a user is in
 	 *
@@ -163,21 +168,21 @@ class UserController extends AbstractAuthenticationController {
 	 * @param string $limit
 	 * @param string $offset
 	 */
-	public function actionRoles($userId, $orderColumn = 'name', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "") {
-
-		$roles = Role::find(Query::newInstance()
-								->orderBy([$orderColumn => $orderDirection])
-								->limit($limit)
-								->offset($offset)
-								->search($searchQuery, array('t.name'))
-								->joinRelation('userRole')
-								->groupBy(['t.id'])
-								->where(['userRole.userId' => $userId]));
-
-		$store = new Store($roles);
-
-		echo $this->view->render('store', $store);
-	}
+//	public function actionRoles($userId, $orderColumn = 'name', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "") {
+//
+//		$roles = Role::find(Query::newInstance()
+//								->orderBy([$orderColumn => $orderDirection])
+//								->limit($limit)
+//								->offset($offset)
+//								->search($searchQuery, array('t.name'))
+//								->joinRelation('userRole')
+//								->groupBy(['t.id'])
+//								->where(['userRole.userId' => $userId]));
+//
+//		$store = new Store($roles);
+//
+//		echo $this->view->render('store', $store);
+//	}
 
 	/**
 	 * Fetch all roles that the given user is not in

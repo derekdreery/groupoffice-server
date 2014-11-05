@@ -950,14 +950,17 @@ abstract class AbstractRecord extends Model {
 	 * @throws Exception
 	 */
 	protected function dbUpdate() {
+		
+		
+		if ($this->getColumn('modifiedAt') && !$this->isModified('modifiedAt')) {
+			$this->modifiedAt = gmdate(Column::DATETIME_API_FORMAT);
+		}
 
 		if (!$this->isModified()) {
 			return true;
 		}
-
-		if ($this->getColumn('modifiedAt') && !$this->isModified('modifiedAt')) {
-			$this->modifiedAt = gmdate(Column::DATETIME_API_FORMAT);
-		}
+	
+	
 		
 		$i =0;
 		
@@ -1661,5 +1664,10 @@ abstract class AbstractRecord extends Model {
 	public static function lock($write = true){
 		$mode = $write ? 'WRITE' : 'READ';
 		return App::dbConnection()->getPDO()->query("LOCK TABLES `".static::tableName()."`  $mode, `".static::tableName()."` AS t $mode");
+	}
+	
+	
+	public function getETag(){
+		return $this->modifiedAt;
 	}
 }

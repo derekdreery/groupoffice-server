@@ -157,7 +157,8 @@ class Router {
 			$url .= ":".$_SERVER["SERVER_PORT"];
 		}
 		
-		$url .= $_SERVER['PHP_SELF'];
+		//TODO!!!
+		$url .= dirname($_SERVER['PHP_SELF']).'/api.php';
 		
 		return $url;
 

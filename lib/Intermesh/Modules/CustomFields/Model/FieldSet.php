@@ -51,4 +51,41 @@ class FieldSet extends AbstractRecord{
 		
 		return parent::validate();
 	}
+	
+	
+	public $resort = false;
+	
+	private function _resort(){		
+		
+		if($this->resort) {			
+
+			$fieldSets = FieldSet::find();
+			
+
+			$sortOrder = 0;
+			foreach($fieldSets as $fieldSet){
+				
+				$sortOrder++;
+
+				if($sortOrder == $this->sortOrder){
+					$sortOrder++;
+				}
+
+				//skip this model
+				if($fieldSet->id == $this->id){					
+					continue;
+				}
+
+				$fieldSet->sortOrder = $sortOrder;				
+				$fieldSet->save();
+			}
+		}		
+	}
+	
+	public function save() {
+		
+		$this->_resort();
+		
+		return parent::save();
+	}
 }

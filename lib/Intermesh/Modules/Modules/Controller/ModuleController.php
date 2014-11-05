@@ -2,10 +2,11 @@
 
 namespace Intermesh\Modules\Modules\Controller;
 
-use Intermesh\Modules\Auth\Controller\AbstractAuthenticationController;
-use Intermesh\Modules\Modules\Model\Module;
+use Intermesh\Core\Controller\AbstractRESTController;
 use Intermesh\Core\Data\Store;
 use Intermesh\Core\Db\Query;
+use Intermesh\Core\Exception\NotImplemented;
+use Intermesh\Modules\Modules\Model\Module;
 
 
 /**
@@ -15,9 +16,18 @@ use Intermesh\Core\Db\Query;
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-class ModuleController extends AbstractAuthenticationController {
+class ModuleController extends AbstractRESTController {
 
 
+	protected function httpGet($moduleId=null){
+		if(!isset($moduleId)){
+			return $this->callMethodWithParams('store');
+		}else
+		{
+			return $this->renderError(501); //Not implemented
+		}
+	}
+	
 	/**
 	 * Fetch modules
 	 *
@@ -29,7 +39,7 @@ class ModuleController extends AbstractAuthenticationController {
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return array JSON Model data
 	 */
-	public function actionStore($orderColumn = 'id', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "") {
+	protected function store($orderColumn = 'id', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "") {
 
 		$query = Query::newInstance()
 				->orderBy([$orderColumn => $orderDirection])
@@ -42,6 +52,6 @@ class ModuleController extends AbstractAuthenticationController {
 		$store = new Store($modules);
 //		$store->setReturnAttributes($returnAttributes);
 
-		echo $this->view->render('store', $store);
+		return $this->renderStore($store);
 	}
 }

@@ -12,4 +12,6 @@ App::init(require('../config.php'));
 App::config()->classLoader = $classLoader;
 
 //Run the controller
-App::router()->run();
+$router = new \Intermesh\Core\REST\Router();
+
+$router->run();

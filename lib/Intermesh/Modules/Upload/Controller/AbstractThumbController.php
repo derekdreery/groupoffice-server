@@ -3,6 +3,8 @@
 namespace Intermesh\Modules\Upload\Controller;
 
 use Intermesh\Core\App;
+use Intermesh\Core\Controller\AbstractRESTController;
+use Intermesh\Core\Exception\Forbidden;
 use Intermesh\Core\Fs\File;
 use Intermesh\Core\Util\Image;
 
@@ -29,7 +31,7 @@ use Intermesh\Core\Util\Image;
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-trait ThumbControllerTrait {
+abstract class AbstractThumbController extends AbstractRESTController {
 
 	/**
 	 * Get the relative folder the image should be fetched from.
@@ -77,13 +79,13 @@ trait ThumbControllerTrait {
 	 * @param bool $zoomCrop
 	 * @param bool $fitBox
 	 */
-	protected function actionThumb($w = 0, $h = 0, $zoomCrop = false, $fitBox = false) {
+	protected function httpGet($w = 0, $h = 0, $zoomCrop = false, $fitBox = false) {
 
 		App::session()->closeWriting();
 
 		try{
 			$file = $this->thumbGetFile();
-		}catch(Intermesh\Core\Exception\Forbidden $e){
+		}catch(Forbidden $e){
 			App::request()->redirect('https://www.placehold.it/'.$w.'x'.$h.'/EFEFEF/AAAAAA&text=Forbidden');
 		}
 		
@@ -176,10 +178,9 @@ trait ThumbControllerTrait {
 	private function _thumbHeaders($useCache, File $file) {
 
 		if ($useCache) {
-			header("Expires: " . date("D, j M Y G:i:s ", time() + (86400 * 365)) . 'GMT'); //expires in 1 year
-			header('Cache-Control: cache');
-			header('Pragma: cache');
+			$this->cacheHeaders(new \DateTime('@'.$file->getModifiedAt()), $file->getMd5Hash());
 		}
+		
 		header('Content-Type: '.$file->getContentType());
 		header('Content-Disposition: inline; filename="' . $file->getName() . '"');
 		header('Content-Transfer-Encoding: binary');
