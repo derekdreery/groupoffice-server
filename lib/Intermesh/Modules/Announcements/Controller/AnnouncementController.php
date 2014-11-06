@@ -3,15 +3,12 @@
 namespace Intermesh\Modules\Announcements\Controller;
 
 use Intermesh\Core\App;
-use Intermesh\Core\Controller\CrudControllerInterface;
+use Intermesh\Core\Controller\AbstractCrudController;
 use Intermesh\Core\Data\Store;
 use Intermesh\Core\Db\Query;
 use Intermesh\Core\Exception\Forbidden;
 use Intermesh\Core\Exception\NotFound;
-use Intermesh\Modules\Auth\Controller\AbstractAuthenticationController;
-use Intermesh\Modules\Auth\Model\User;
 use Intermesh\Modules\Announcements\Model\Announcement;
-use Intermesh\Modules\Upload\Controller\ThumbControllerTrait;
 
 /**
  * The controller for address books
@@ -20,25 +17,8 @@ use Intermesh\Modules\Upload\Controller\ThumbControllerTrait;
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-class AnnouncementController extends AbstractAuthenticationController implements CrudControllerInterface {
+class AnnouncementController extends AbstractCrudController {
 
-	protected $checkModulePermision = true;
-
-	use ThumbControllerTrait;
-
-	protected function thumbGetFile() {
-		$announcement = Announcement::findByPk($_GET['announcementId']);		
-
-		if ($announcement) {		
-			return $announcement->getImageFile();
-		}
-		
-		return false;
-	}
-
-	protected function thumbUseCache() {
-		return true;
-	}
 
 	/**
 	 * Fetch announcements
@@ -79,7 +59,7 @@ class AnnouncementController extends AbstractAuthenticationController implements
 		$store = new Store($announcements);
 		$store->setReturnAttributes($returnAttributes);
 
-		echo $this->view->render('store', $store);
+		return $this->renderStore($store);
 	}
 
 	/**
@@ -98,14 +78,16 @@ class AnnouncementController extends AbstractAuthenticationController implements
 	public function actionCreate($returnAttributes = []) {
 
 		$announcement = new Announcement();
+		$announcement->setAttributes(App::request()->payload['data']['attributes']);
+		$announcement->save();		
 
-		if (isset(App::request()->post['announcement'])) {
-			$announcement->setAttributes(App::request()->post['announcement']['attributes']);
-
-			$announcement->save();
-		}
-
-		echo $this->view->render('form', array('announcement' => $announcement, 'returnAttributes' => $returnAttributes));
+		return $this->renderModel($announcement, $returnAttributes);
+	}
+	
+	public function actionNew($returnAttributes = []){
+		$announcement = new Announcement();
+		
+		return $this->renderModel($announcement, $returnAttributes);
 	}
 
 	/**
@@ -123,13 +105,7 @@ class AnnouncementController extends AbstractAuthenticationController implements
 			throw new NotFound();
 		}
 
-
-		echo $this->view->render(
-				'read', [
-			'announcement' => $announcement,
-			'returnAttributes' => $returnAttributes
-				]
-		);
+		return $this->renderModel($announcement, $returnAttributes);
 	}
 
 	/**
@@ -154,18 +130,11 @@ class AnnouncementController extends AbstractAuthenticationController implements
 		if (!$announcement) {
 			throw new NotFound();
 		}
-
-		if (isset(App::request()->post['announcement'])) {
 	
-			$announcement->setAttributes(App::request()->post['announcement']['attributes']);
-			$announcement->save();
-		} 
-		echo $this->view->render(
-				'form', [
-			'announcement' => $announcement,
-			'returnAttributes' => $returnAttributes
-				]
-		);
+		$announcement->setAttributes(App::request()->payload['data']['attributes']);
+		$announcement->save();
+		
+		return $this->renderModel($announcement, $returnAttributes);
 	}
 
 	/**
@@ -181,10 +150,9 @@ class AnnouncementController extends AbstractAuthenticationController implements
 			throw new NotFound();
 		}
 
-
 		$announcement->delete();
 
-		echo $this->view->render('delete', array('announcement' => $announcement));
+		return $this->renderModel($announcement);
 	}
 
 

@@ -89,6 +89,14 @@ abstract class AbstractThumbController extends AbstractRESTController {
 			App::request()->redirect('https://www.placehold.it/'.$w.'x'.$h.'/EFEFEF/AAAAAA&text=Forbidden');
 		}
 		
+		if($w == 0 && $h == 0){
+			
+			//output original
+			$this->_thumbHeaders(false, $file);
+			$file->output();
+			exit();
+		}
+		
 		
 
 		$useCache = $this->thumbUseCache();

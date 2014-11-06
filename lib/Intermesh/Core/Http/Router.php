@@ -2,193 +2,232 @@
 
 namespace Intermesh\Core\Http;
 
-use Intermesh\Core\App as App;
-use Intermesh\Core\Controller\AbstractController;
+use Exception;
+use Intermesh\Core\App;
 
 /**
  * The router routes requests to their controller actions
+ *
+ * Each module can define it's own routes. The first part of the route must always
+ * match the module name. So the route "auth/users/1" will look in the contacts module.
  * 
- * 
- * eg.
- * 
- * index.php?r=intermesh/auth/auth/login 
- * 
- * Get's routed to:
- * 
- * Intermesh\Modules\Auth\AuthController::actionLogin()
+ * This will find the class "Intermesh\Modules\Auth\AuthModule".
+ * The routes for that module are defined  in that file:
  * 
  * <code>
- * App::router()->runController();
- * 
- * App::router()->getRoute();
+ * class AuthModule extends AbstractModule{
+	public static function getRoutes(){
+		return [
+					'auth' => [
+						'controller' => AuthController::className(),
+						'children' => [
+							'users' => [
+								'routeParams' => ['userId'],
+								'controller' => UserController::className(),
+								'children' => [
+									'roles' =>[
+										'controller' => UserRolesController::className()
+									]
+								]
+							],
+							'roles' => [
+								'routeParams' => ['roleId'],
+								'controller' => RoleController::className(),
+								'children' => [
+									'users' =>[
+										'controller' => RoleUsersController::className()
+									],
+
+								]
+							],
+							'permissions' => [
+								'routerParams' => ['modelId', 'modelName'],
+								'controller' => PermissionsController::className()
+							]
+						]
+					]
+
+			];
+		}
+
+	}
  * </code>
  * 
+ * So in this case our example will find the "users" and the "routeParam" "userId" will be set to "1".
+ * 
+ * The UserController will handle this request. 
+ * 
+ * {@see \Intermesh\Core\Controller\AbstractRESTController} and {@see \Intermesh\Core\Controller\AbstractCrudController}
+ *
  * @copyright (c) 2014, Intermesh BV http://www.intermesh.nl
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
+
 class Router {
 
-	/**
-	 * Analyzes the request URL and finds the controller.
-	 * 
-	 * URL Should be like index.php?r=module/controller/method&param=value
-	 * 
-	 * If a controller consist of two words then the second word should start with
-	 * a capital letter.
-	 * 
-	 */
-	private $_controller;
-	private $_action;
-	private $_r;
+	private function getModuleRoutes($module) {
 
-	/**
-	 * Get the controller route. eg. email/message/view
-	 * 
-	 * @return string 
-	 */
-	public function getControllerRoute() {
-		return $this->_r;
-	}
+		$className = "\\Intermesh\\Modules\\" . $module . "\\" . $module . "Module";
 
-	/**
-	 * Get the currently active controller for this request.
-	 * 
-	 * @return AbstractController 
-	 */
-	public function getController() {
-		return $this->_controller;
-	}
 
-	/**
-	 * Get the currently processing controller action in lowercase and without the
-	 * action prefix.
-	 * 
-	 * @return string
-	 */
-	public function getControllerAction() {
-		return $this->_action;
-	}
-
-	/**
-	 * Runs a controller action with the given params
-	 * 
-	 * @param array $params 
-	 */
-	public function runController() {
-
-		$r = isset(App::request()->get['r']) ? App::request()->get['r'] : false;
-
-		if (!$r) {
-			$this->_httpError("HTTP/1.1 400", "Bad request. No controller route given");
-			return false;
+		if (!class_exists($className)) {
+			throw new Exception("Module (" . $className . ") has no routes!");
+		} else {
+			return $className::getRoutes();
 		}
-
-
-		$r = explode('/', $r);
-
-		//Camel casisfy
-		$r = array_map('ucfirst', $r);
-
-
-		if (count($r) !== 4) {
-			$this->_httpError("HTTP/1.1 400", "Bad request. Invalid controller route given. It should have 4 components: 'namespace/appName/controllerName/actionMethod'.");
-			return false;
-		}
-
-		list($namespace, $module, $controller, $action) = $r;
-
-
-		$controllerClass = $namespace . '\\Modules\\' . $module . '\\Controller\\' . $controller . 'Controller';
-
-		if (preg_match('/[^A-Za-z0-9_\\\\]+/', $controllerClass, $matches)) {
-			$err = "Only these charactes are allowed in controller names: A-Za-z0-9_";
-			echo $err;
-			trigger_error($err, E_USER_ERROR);
-		}
-
-		$this->_action = $action;
-
-
-		if (!class_exists($controllerClass)) {
-			$this->_httpError("404 Not found", "Controller class ('" . $controllerClass . "') does not exist.");
-			return false;
-		}
-
-
-		$this->_controller = new $controllerClass;
-
-		$actionMethod = 'action' . ucfirst($action);
-		if (!method_exists($this->_controller, $actionMethod)) {
-			$this->_httpError("404 Not found", "Action method ('" . $actionMethod . "') does not exist in controller ('" . $controllerClass . "').");
-			return false;
-		}
-
-		$this->_controller->callActionMethod($actionMethod);
-
-		return true;
-	}
-
-	private function _httpError($status, $errorMsg) {
-		header("HTTP/1.1 $status");
-		header("Status: $status");
-
-		if (empty($_SERVER['QUERY_STRING'])) {
-			$_SERVER['QUERY_STRING'] = "[EMPTY QUERY_STRING]";
-		}
-
-		echo '<h1>' . $status . '</h1>';
-		echo '<p>' . $errorMsg . '</p>';
-		echo '<p>Query string: ' . $_SERVER['QUERY_STRING'] . '</p>';
-
-//		trigger_error($errorMsg, E_USER_ERROR);		
 	}
 	
+	/**
+	 * The current route. 
+	 * 
+	 * eg. /contacts/1
+	 * 
+	 * @var string 
+	 */
+	public $route;
+
+	/**
+	 * Finds the controller that matches the route and runs it.
+	 */
+	public function run() {
+
+//		try {
+
+			$this->route = isset(App::request()->get['r']) ? App::request()->get['r'] : false;
+
+			$this->_routeParts = explode('/', $this->route);
+
+			$module = ucfirst($this->_routeParts[0]);
+
+			$routes = $this->getModuleRoutes($module);
+
+			$this->walkRoute($routes);
+//		} catch (\Exception $e) {
+//			
+//		}
+	}
+
+	/**
+	 * Get the params passed in a route.
+	 * 
+	 * eg. /contacts/1 where 1 is a "contactId" would return ["contactId" => 1];
+	 * 
+	 * @var array
+	 */
+	public $routeParams = [];
 	
+	/**
+	 * The configuration of the current route
+	 * 
+	 * eg.
+	 * 
+	 * 'contacts' => [
+						'routeParams' => ['contactId'], 
+						'controller' => "Intermesh\Core\Controller\RESTController",						
+						'children' => [
+								'thumb' => [
+									'routeParams' => ['contactId'],
+									'controller' => "Intermesh\Contacts\Controller\Contact",
+									'actions' => ['thumb', 'original','upload'],
+									'args' => ['modelName' => Contact::className(), 'primaryKeyName' => 'contactId'],
+								]
+							]
+						]
+	 * 
+	 * @var array
+	 */
 	
-	private function getBaseUrl(){
-		
+	public $routeConfig;
+	
+	private $_routeParts;
+
+	
+
+	private function walkRoute($routes) {
+
+		$routePart = array_shift($this->_routeParts);
+
+		foreach ($routes as $path => $config) {
+			if ($routePart === $path) {
+				$this->getParams($config);
+
+				if (!empty($this->_routeParts)) {
+					if (!isset($config['children'])) {
+						$config['children'] = [];
+					}
+					return $this->walkRoute($config['children']);
+				} else {
+
+					if (!isset($config['controller'])) {
+						throw new Exception("No controller defined for this route!");
+					}
+
+					if (!isset($config['constructorArgs'])) {
+						$config['constructorArgs'] = [];
+					}
+					
+					$this->routeConfig = $config;
+
+					$controller = new $config['controller']($this);
+					return $controller->run();
+				}
+			}
+		}
+
+		throw new Exception("Route $routePart not found! " . var_export($routes, true));
+	}
+
+	private function getParams($options) {
+		if (!empty($options['routeParams'])) {
+			foreach ($options['routeParams'] as $paramName) {
+				$this->routeParams[$paramName] = array_shift($this->_routeParts);
+			}
+		}
+	}
+
+	private function getBaseUrl() {
+
 		$https = App::request()->isHttps();
-		
 		$url = $https ? 'https://'.$_SERVER['HTTP_HOST'] : 'http://'.$_SERVER['HTTP_HOST'];
-	
-			
 		if ((!$https && $_SERVER["SERVER_PORT"] != 80) || ($https && $_SERVER["SERVER_PORT"] != 443)){
 			$url .= ":".$_SERVER["SERVER_PORT"];
 		}
-		
-		//TODO!!!
-		$url .= dirname($_SERVER['PHP_SELF']).'/api.php';
-		
-		return $url;
+		$url .= $_SERVER['PHP_SELF'];
 
+		return $url;
 	}
 
 	/**
 	 * Generate a controller URL.
+	 * 
+	 * eg. buildUrl('auth/users', ['sortDirection' => 'DESC']); will build:
+	 * 
+	 * "/index.php?r=auth/users&sortDirection=DESC"
 	 *
 	 * @param string $route To controller. eg. addressbook/contact/submit
 	 * @param array $params eg. ['id' => 1, 'someVar' => 'someValue']
 	 * @return string
 	 */
 	public function buildUrl($route = '', $params = []) {
-		
-		$url = $this->getBaseUrl();
-		
-		if(!empty($route)){
-			$params['r'] = $route;
-		}
-		
-		if(count($params)){
-			$queryParams = '?';
 
-			foreach($params as $key=>$value){
-				$queryParams .= $key.'='.urlencode($value).'&';
-			}
-			
-			$url .= rtrim($queryParams,'&');
+		$url = $this->getBaseUrl();
+
+		if (!empty($route)) {
+			$url .= '?r='.$route;
 		}
-		
+
+		if (count($params)) {
+			$queryParams = empty($route) ? '?' : '&';
+
+			foreach ($params as $key => $value) {
+				
+				$queryParams .= $key . '=' . urlencode($value) . '&';
+			}
+
+			$url .= rtrim($queryParams, '&');
+		}
+
 		return $url;
 	}
 

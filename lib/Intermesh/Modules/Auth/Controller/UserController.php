@@ -3,7 +3,7 @@
 namespace Intermesh\Modules\Auth\Controller;
 
 use Intermesh\Core\App;
-use Intermesh\Core\Controller\AbstractRESTController;
+use Intermesh\Core\Controller\AbstractCrudController;
 use Intermesh\Core\Data\Store;
 use Intermesh\Core\Db\Criteria;
 use Intermesh\Core\Db\Query;
@@ -19,7 +19,7 @@ use Intermesh\Modules\Auth\Model\UserRole;
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-class UserController extends AbstractRESTController {
+class UserController extends AbstractCrudController {
 
 
 	protected function authenticate() {
@@ -37,7 +37,7 @@ class UserController extends AbstractRESTController {
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return array JSON Model data
 	 */
-	protected function store($orderColumn = 'username', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "", $returnAttributes = []) {
+	protected function actionStore($orderColumn = 'username', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "", $returnAttributes = []) {
 
 		$users = User::find(Query::newInstance()
 								->orderBy([$orderColumn => $orderDirection])
@@ -55,35 +55,37 @@ class UserController extends AbstractRESTController {
 	/**
 	 * GET a list of users or fetch a single user
 	 *
-	 * The attributes of this user should be posted as JSON in a role object
-	 *
-	 * <p>Example for POST and return data:</p>
-	 * <code>
-	 * {"data":{"attributes":{"name":"test",...}}}
-	 * </code>
 	 * 
 	 * @param int $userId The ID of the role
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return JSON Model data
 	 */
-	protected function httpGet($userId = null, $returnAttributes = []){
-		if(!isset($userId)){
-			return $this->callMethodWithParams('store');
-		}  else {
-			
-			if($userId == 0){
-				$user = new User();
-			}else
-			{
-				$user = User::findByPk($userId);
-			}
+	protected function actionRead($userId = null, $returnAttributes = []){
+	
+		$user = User::findByPk($userId);
 
-			if (!$user) {
-				return $this->renderError(404);					
-			}
-			
-			return $this->renderModel($user, $returnAttributes);
+		if (!$user) {
+			throw new NotFound();			
 		}
+
+		return $this->renderModel($user, $returnAttributes);
+		
+	}
+	
+	
+	/**
+	 * Get's the default data for a new user
+	 * 
+	 * 
+	 * 
+	 * @param array $returnAttributes
+	 * @return array
+	 */
+	protected function actionNew($returnAttributes = []){
+		
+		$user = new User();
+
+		return $this->renderModel($user, $returnAttributes);
 	}
 
 	
@@ -100,15 +102,11 @@ class UserController extends AbstractRESTController {
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return JSON Model data
 	 */
-	public function httpPost($returnAttributes = []) {
+	public function actionCreate($returnAttributes = []) {
 
 		$user = new User();
-		
-
 		$user->setAttributes(App::request()->payload['data']['attributes']);
-
-		$user->save();
-		
+		$user->save();		
 
 		return $this->renderModel($user, $returnAttributes);
 	}
@@ -128,12 +126,12 @@ class UserController extends AbstractRESTController {
 	 * @return JSON Model data
 	 * @throws NotFound
 	 */
-	public function httpPut($userId, $returnAttributes = []) {
+	public function actionUpdate($userId, $returnAttributes = []) {
 
 		$user = User::findByPk($userId);
 
 		if (!$user) {
-			return $this->renderError(404);
+			throw new NotFound();
 		}
 
 		$user->setAttributes(App::request()->payload['data']['attributes']);
@@ -148,69 +146,15 @@ class UserController extends AbstractRESTController {
 	 * @param int $userId
 	 * @throws NotFound
 	 */
-	public function httpDelete($userId) {
+	public function actionDelete($userId) {
 		$user = User::findByPk($userId);
 
 		if (!$user) {
-			return $this->renderError(404);
+			throw new NotFound();
 		}
 
 		$user->delete();
 
 		return $this->renderModel($user);
 	}
-	
-	/**
-	 * Fetch all roles that a user is in
-	 *
-	 * @param string $orderColumn
-	 * @param string $orderDirection
-	 * @param string $limit
-	 * @param string $offset
-	 */
-//	public function actionRoles($userId, $orderColumn = 'name', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "") {
-//
-//		$roles = Role::find(Query::newInstance()
-//								->orderBy([$orderColumn => $orderDirection])
-//								->limit($limit)
-//								->offset($offset)
-//								->search($searchQuery, array('t.name'))
-//								->joinRelation('userRole')
-//								->groupBy(['t.id'])
-//								->where(['userRole.userId' => $userId]));
-//
-//		$store = new Store($roles);
-//
-//		echo $this->view->render('store', $store);
-//	}
-
-	/**
-	 * Fetch all roles that the given user is not in
-	 *
-	 * @param string $orderColumn
-	 * @param string $orderDirection
-	 * @param string $limit
-	 * @param string $offset
-	 */
-	public function actionAvailableRoles($userId, $orderColumn = 'name', $orderDirection = 'ASC', $limit = 10, $offset = 0, $searchQuery = "") {
-
-		$roles = Role::find(Query::newInstance()
-								->orderBy([$orderColumn => $orderDirection])
-								->limit($limit)
-								->offset($offset)
-								->search($searchQuery, array('t.name'))
-								->joinAdvanced(
-										UserRole::className(), 
-										Criteria::newInstance()
-											->where('t.id = userRole.roleId')
-											->andWhere(['userRole.userId' => $userId])
-										, 'userRole', 'LEFT')
-								->where(['userRole.roleId' => null])
-		);
-
-		$store = new Store($roles);
-
-		echo $this->view->render('store', $store);
-	}
-
 }

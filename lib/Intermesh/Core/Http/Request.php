@@ -1,9 +1,6 @@
 <?php
 namespace Intermesh\Core\Http;
 
-use Intermesh\Core\App;
-use JWT;
-
 /**
  * The HTTP request class.
  *
@@ -19,20 +16,23 @@ use JWT;
 class Request {
 
 	/**
-	 *
+	 * Contains the POST variables
+	 * 
 	 * @var array
 	 */
 	public $post;
 
 	/**
-	 *
+	 * The body of the request. Only JSON is supported at the moment.
+	 * 
 	 * @var array 
 	 */
 	public $payload;
 	
 		
 	/**
-	 *
+	 * Contains the GET variables.
+	 * 
 	 * @var array
 	 */
 	public $get;

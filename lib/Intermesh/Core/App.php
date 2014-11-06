@@ -5,7 +5,7 @@ namespace Intermesh\Core;
 use Intermesh\Core\Cache\Disk;
 use Intermesh\Core\Db\Connection;
 use Intermesh\Core\Http\Request;
-use Intermesh\Core\REST\Router;
+use Intermesh\Core\Http\Router;
 
 /**
  * App singleton class with services

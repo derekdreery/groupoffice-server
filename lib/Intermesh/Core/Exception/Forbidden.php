@@ -1,8 +1,6 @@
 <?php
 namespace Intermesh\Core\Exception;
 
-use Exception;
-
 /**
  * Throw when an operation was forbidden.
  * 
@@ -10,7 +8,9 @@ use Exception;
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-class Forbidden extends Exception
+class Forbidden extends HttpException
 {
-
+	public function __construct() {
+		parent::__construct(403);
+	}
 }

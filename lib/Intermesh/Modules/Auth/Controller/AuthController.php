@@ -4,7 +4,6 @@ namespace Intermesh\Modules\Auth\Controller;
 use Intermesh\Modules\Auth\Model\Token;
 use Intermesh\Modules\Auth\Model\User;
 use Intermesh\Core\App;
-use Intermesh\Core\Controller\AbstractController;
 
 /**
  * The controller that handles authentication

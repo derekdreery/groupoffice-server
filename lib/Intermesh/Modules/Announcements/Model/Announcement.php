@@ -57,6 +57,13 @@ class Announcement extends AbstractRecord{
 			return new File(self::getImagesFolder().'/'.$this->imagePath);
 		}
 	}
+	
+	public function getThumbUrl(){
+		
+		//Added modified at so browser will reload when dynamically changed with js
+		return App::router()->buildUrl("announcements/".$this->id."/thumb", ['modifiedAt' => $this->modifiedAt]); 
+		
+	}
 
 	/**
 	 * Set a photo
