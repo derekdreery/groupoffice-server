@@ -275,6 +275,7 @@ abstract class AbstractRESTController extends AbstractObject {
 		}
 
 		$response['data'] = $model->toArray($returnAttributes);
+		$response['success'] = !$model->hasValidationErrors();
 
 
 

@@ -852,7 +852,7 @@ abstract class AbstractRecord extends Model {
 				
 			if(!$r["relation"]->set($this, $r["value"])){
 				
-				App::debug("Saving relation". $r['name'].' failed: '.var_export($r['relation']->getValidationErrors()));
+				App::debug("Saving relation". $r['name'].' failed: '.var_export($r['relation']->getValidationErrors(), true));
 
 				$this->setValidationError($r['name'], 'relation', $r['relation']->getValidationErrors());				
 				App::dbConnection()->getPDO()->rollBack();				
