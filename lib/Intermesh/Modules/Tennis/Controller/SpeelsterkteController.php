@@ -1,11 +1,12 @@
 <?php
 namespace Intermesh\Modules\Tennis\Controller;
 
-use Intermesh\Core\Controller\AbstractController;
+use Intermesh\Core\Controller\AbstractRESTController;
 use Intermesh\Core\Db\Query;
+use Intermesh\Core\Http\Client;
 use Intermesh\Modules\Contacts\Model\Contact;
 
-class SpeelsterkteController extends AbstractController{
+class SpeelsterkteController extends AbstractRESTController{
 	
 	private $_url = 'http://publiek.mijnknltb.nl/spelersprofiel.aspx?bondsnummer=';
 	
@@ -20,7 +21,7 @@ class SpeelsterkteController extends AbstractController{
 		
 		
 		
-		$httpClient = new \Intermesh\Core\Http\Client();
+		$httpClient = new Client();
 		
 		foreach($contacts as $contact){
 			$html = $httpClient->request($this->_url.$contact->customfields->Bondsnummer);

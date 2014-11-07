@@ -5,11 +5,11 @@ namespace Intermesh\Modules\Dropbox\Controller;
 use Dropbox as dbx;
 use Dropbox\WebAuth;
 use Intermesh\Core\App;
-use Intermesh\Modules\Auth\Controller\AbstractAuthenticationController;
+use Intermesh\Core\Controller\AbstractRESTController;
 use Intermesh\Modules\Dropbox\Config;
 use Intermesh\Modules\Dropbox\CsrfTokenStore;
 
-class AuthorizeController extends AbstractAuthenticationController {
+class AuthorizeController extends AbstractRESTController {
 	
 	/**
 	 * 

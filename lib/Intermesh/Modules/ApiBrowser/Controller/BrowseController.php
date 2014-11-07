@@ -1,12 +1,12 @@
 <?php
 namespace Intermesh\Modules\ApiBrowser\Controller;
 
-use Intermesh\Core\Controller\AbstractController;
+use Intermesh\Core\Controller\AbstractCrudController;
 use Intermesh\Modules\Modules\ModuleUtils;
 use ReflectionClass;
 use ReflectionMethod;
 
-class BrowseController extends AbstractController{
+class BrowseController extends AbstractCrudController{
 	
 	
 	

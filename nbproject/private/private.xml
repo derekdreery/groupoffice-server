@@ -2,6 +2,15 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group name="PocketOffice"/>
+        <group name="PocketOffice">
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Auth/Controller/AuthController.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Auth/Controller/PermissionsController.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Dropbox/Controller/AuthorizeController.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Announcements/Controller/AnnouncementController.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Auth/AuthModule.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Core/Controller/AbstractRESTController.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Auth/Controller/RoleController.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Core/Controller/AbstractCrudController.php</file>
+        </group>
     </open-files>
 </project-private>

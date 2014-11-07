@@ -61,7 +61,7 @@ class Announcement extends AbstractRecord{
 	public function getThumbUrl(){
 		
 		//Added modified at so browser will reload when dynamically changed with js
-		return App::router()->buildUrl("announcements/".$this->id."/thumb", ['modifiedAt' => $this->modifiedAt]); 
+		return empty($this->imagePath) ? false : App::router()->buildUrl("announcements/".$this->id."/thumb", ['modifiedAt' => $this->modifiedAt]); 
 		
 	}
 

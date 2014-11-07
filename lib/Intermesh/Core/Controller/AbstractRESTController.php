@@ -123,11 +123,12 @@ abstract class AbstractRESTController extends AbstractObject {
 
 			$json = $this->callMethodWithParams("http" . $_SERVER['REQUEST_METHOD']);		
 
+			if(isset($json)){
+				$json = json_encode($json, JSON_PRETTY_PRINT);
 
-			$json = json_encode($json, JSON_PRETTY_PRINT);
-
-			if ($this->cacheJsonOutput) {
-				$this->cacheHeaders(null, md5($json));
+				if ($this->cacheJsonOutput) {
+					$this->cacheHeaders(null, md5($json));
+				}
 			}
 
 	//		header('X-XSS-Protection: 1; mode=block');

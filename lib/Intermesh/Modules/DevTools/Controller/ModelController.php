@@ -2,16 +2,12 @@
 
 namespace Intermesh\Modules\DevTools\Controller;
 
-use Intermesh\Core\Controller\AbstractController;
+use Intermesh\Core\Controller\AbstractRESTController;
 use Intermesh\Core\Db\Column;
-use Intermesh\Core\Db\Criteria;
-use Intermesh\Core\Db\Finder;
-use Intermesh\Core\Db\Query;
-use Intermesh\Modules\Contacts\Model\Contact;
 
-class ModelController extends AbstractController {
+class ModelController extends AbstractRESTController {
 
-	public function actionDatabaseToProperties($modelName) {
+	public function httpGet($modelName) {
 
 		header('Content-Type:text/plain;charset=utf-8;');
 
@@ -55,81 +51,81 @@ class ModelController extends AbstractController {
 	}
 	
 	
-	public function actionColumns(){
-		var_dump(\IPE\Modules\Notes\Model\Note::getColumns());
-	}
-
-	public function actionTest() {
-
-		/* @var $finder Finder */
-		
-		$finder = Contact::find(
-						Query::newInstance()
-								->select('t.*, count(emailAddresses.id)')
-								->joinRelation('emailAddresses', false)								
-								->groupBy(array('t.id'))
-								->having("count(emailAddresses.id) > 0")
-						->where(['!=',['lastName' => null]])
-						->andWhere(
-								Criteria::newInstance()
-									->where(['IN','firstName', ['Merijn', 'Wesley']])
-									->orWhere(['emailAddresses.email'=>'test@intermesh.nl'])
-								)
-
-		);
-		
-		/*
-		 * SELECT t.*, count(emailAddresses.id) FROM `contactsContact` t
-			INNER JOIN `contactsContactEmailAddress` emailAddresses ON (`t`.`id` = `emailAddresses`.`contactId`)
-			WHERE
-			(
-				`t`.`lastName` IS NOT NULL
-			)
-			AND
-			(
-				(
-					`t`.`firstName` IN ("Merijn", "Wesley")
-				)
-				OR
-				(
-					`emailAddresses`.`email` = "test@intermesh.nl"
-				)
-			)
-			AND
-			(
-				`t`.`deleted` != "1"
-			)
-
-			GROUP BY `t`.`id`
-			HAVING
-			(
-				count(emailAddresses.id) > 0
-			)
-		 */
-		
-		
-
-		echo $finder->buildSql();
-		
-		
-//		var_dump($finder->aliasMap);
-		
-		$contacts = $finder->all();
-//		var_dump($finder->bindParameters);
-		
-		var_dump($contacts);
-		
-		var_dump(\Intermesh\Core\App::debugger()->entries);
-	}
-	
-	
-	public function actionImap(){
-		
-		$account = \Intermesh\Modules\Imap\Model\Account::find()->single();
-		
-		$account->sync();
-		
-	}
+//	public function actionColumns(){
+//		var_dump(\IPE\Modules\Notes\Model\Note::getColumns());
+//	}
+//
+//	public function actionTest() {
+//
+//		/* @var $finder Finder */
+//		
+//		$finder = Contact::find(
+//						Query::newInstance()
+//								->select('t.*, count(emailAddresses.id)')
+//								->joinRelation('emailAddresses', false)								
+//								->groupBy(array('t.id'))
+//								->having("count(emailAddresses.id) > 0")
+//						->where(['!=',['lastName' => null]])
+//						->andWhere(
+//								Criteria::newInstance()
+//									->where(['IN','firstName', ['Merijn', 'Wesley']])
+//									->orWhere(['emailAddresses.email'=>'test@intermesh.nl'])
+//								)
+//
+//		);
+//		
+//		/*
+//		 * SELECT t.*, count(emailAddresses.id) FROM `contactsContact` t
+//			INNER JOIN `contactsContactEmailAddress` emailAddresses ON (`t`.`id` = `emailAddresses`.`contactId`)
+//			WHERE
+//			(
+//				`t`.`lastName` IS NOT NULL
+//			)
+//			AND
+//			(
+//				(
+//					`t`.`firstName` IN ("Merijn", "Wesley")
+//				)
+//				OR
+//				(
+//					`emailAddresses`.`email` = "test@intermesh.nl"
+//				)
+//			)
+//			AND
+//			(
+//				`t`.`deleted` != "1"
+//			)
+//
+//			GROUP BY `t`.`id`
+//			HAVING
+//			(
+//				count(emailAddresses.id) > 0
+//			)
+//		 */
+//		
+//		
+//
+//		echo $finder->buildSql();
+//		
+//		
+////		var_dump($finder->aliasMap);
+//		
+//		$contacts = $finder->all();
+////		var_dump($finder->bindParameters);
+//		
+//		var_dump($contacts);
+//		
+//		var_dump(App::debugger()->entries);
+//	}
+//	
+//	
+//	public function actionImap(){
+//		
+//		$account = Account::find()->single();
+//		
+//		$account->sync();
+//		
+//	}
 		
 
 }

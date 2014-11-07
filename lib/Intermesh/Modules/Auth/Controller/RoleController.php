@@ -133,7 +133,7 @@ class RoleController extends AbstractCrudController {
 	 * @return JSON Model data
 	 * @throws NotFound
 	 */
-	public function actionoUpdate($roleId, $returnAttributes = []) {
+	public function actionUpdate($roleId, $returnAttributes = []) {
 
 		$role = Role::findByPk($roleId);
 

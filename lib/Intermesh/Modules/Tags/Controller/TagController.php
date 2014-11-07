@@ -2,12 +2,12 @@
 
 namespace Intermesh\Modules\Tags\Controller;
 
-use Intermesh\Modules\Auth\Controller\AbstractAuthenticationController;
-use Intermesh\Modules\Tags\Model\Tag;
 use Intermesh\Core\App;
+use Intermesh\Core\Controller\AbstractCrudController;
 use Intermesh\Core\Data\Store;
 use Intermesh\Core\Db\Query;
 use Intermesh\Core\Exception\NotFound;
+use Intermesh\Modules\Tags\Model\Tag;
 
 /**
  * The controller for address books
@@ -16,7 +16,7 @@ use Intermesh\Core\Exception\NotFound;
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-class TagController extends AbstractAuthenticationController {
+class TagController extends AbstractCrudController {
 
 
 	/**
@@ -45,7 +45,27 @@ class TagController extends AbstractAuthenticationController {
 		$store = new Store($tags);
 		$store->setReturnAttributes($returnAttributes);
 
-		echo $this->view->render('store', $store);
+		return $this->renderStore($store);
+	}
+	
+	/**
+	 * Create a new tag. Use GET to fetch the default attributes or POST to add a new tag.
+	 *
+	 * The attributes of this tag should be posted as JSON in a tag object
+	 *
+	 * <p>Example for POST and return data:</p>
+	 * <code>
+	 * {"tag":{"attributes":{"tagname":"test",...}}}
+	 * </code>
+	 * 
+	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
+	 * @return JSON Model data
+	 */
+	public function actionNew($returnAttributes = []) {
+
+		$tag = new Tag();
+
+		return $this->renderModel($tag, $returnAttributes);
 	}
 
 	/**
@@ -65,17 +85,20 @@ class TagController extends AbstractAuthenticationController {
 
 		$tag = new Tag();
 
-		if (isset(App::request()->post['tag'])) {
-			$tag->setAttributes(App::request()->post['tag']['attributes']);
+		$tag->setAttributes(App::request()->payload['data']['attributes']);
+		$tag->save();
 
-			if (!isset($tag->addressbookId)) {
-				$tag->addressbookId = Tags::getDefault()->id;
-			}
+		return $this->renderModel($tag, $returnAttributes);
+	}
+	
+	public function actionRead($tagId, $returnAttributes = []){
+		$tag = Tag::findByPk($tagId);
 
-			$tag->save();
+		if (!$tag) {
+			throw new NotFound();
 		}
-
-		echo $this->view->render('form', array('tag' => $tag, 'returnAttributes' => $returnAttributes));
+		
+		return $this->renderModel($tag, $returnAttributes);
 	}
 
 	/**
@@ -88,34 +111,33 @@ class TagController extends AbstractAuthenticationController {
 	 * {"tag":{"attributes":{"tagname":"test",...}}}
 	 * </code>
 	 * 
-	 * @param int $id The ID of the tag
+	 * @param int $tagId The ID of the tag
 	 * @param array|JSON $returnAttributes The attributes to return to the client. eg. ['\*','emailAddresses.\*']. See {@see Intermesh\Core\Db\ActiveRecord::getAttributes()} for more information.
 	 * @return JSON Model data
 	 * @throws NotFound
 	 */
-	public function actionUpdate($id, $returnAttributes = []) {
+	public function actionUpdate($tagId, $returnAttributes = []) {
 
-		$tag = Tag::findByPk($id);
+		$tag = Tag::findByPk($tagId);
 
 		if (!$tag) {
 			throw new NotFound();
 		}
 
-		if (isset(App::request()->post['tag'])) {
-			$tag->setAttributes(App::request()->post['tag']['attributes']);
-			$tag->save();
-		}
-		echo $this->view->render('form', array('tag' => $tag, 'returnAttributes' => $returnAttributes));
+		$tag->setAttributes(App::request()->payload['data']['attributes']);
+		$tag->save();
+
+		return $this->renderModel($tag, $returnAttributes);
 	}
 
 	/**
 	 * Delete a tag
 	 *
-	 * @param int $id
+	 * @param int $tagId
 	 * @throws NotFound
 	 */
-	public function actionDelete($id) {
-		$tag = Tag::findByPk($id);
+	public function actionDelete($tagId) {
+		$tag = Tag::findByPk($tagId);
 
 		if (!$tag) {
 			throw new NotFound();
@@ -123,7 +145,7 @@ class TagController extends AbstractAuthenticationController {
 
 		$tag->delete();
 
-		echo $this->view->render('delete', array('tag' => $tag));
+		return $this->renderModel($tag, $returnAttributes);
 	}
 
 }

@@ -2,15 +2,14 @@
 
 namespace Intermesh\Modules\Imap\Controller;
 
-use Intermesh\Core\Controller\CrudControllerInterface;
+use Intermesh\Core\Controller\AbstractRESTController;
 use Intermesh\Core\Exception\Forbidden;
 use Intermesh\Core\Exception\NotFound;
 use Intermesh\Core\Exception\NotImplemented;
-use Intermesh\Modules\Auth\Controller\AbstractAuthenticationController;
 use Intermesh\Modules\Imap\Model\Attachment;
 use Intermesh\Modules\Imap\Model\Message;
 
-class MessageController extends AbstractAuthenticationController implements CrudControllerInterface{
+class MessageController extends AbstractRESTController{
 
 	public function actionAttachment($id) {
 

@@ -1,15 +1,14 @@
 <?php
 namespace Intermesh\Modules\Notes\Controller;
 
-use Intermesh\Modules\Auth\Controller\AbstractAuthenticationController;
 use Intermesh\Core\App;
+use Intermesh\Core\Controller\AbstractCrudController;
 use Intermesh\Core\Data\Store;
 use Intermesh\Core\Db\Query;
 use Intermesh\Core\Exception\Forbidden;
 use Intermesh\Core\Exception\NotFound;
 use Intermesh\Modules\Notes\Model\Note;
 use Intermesh\Modules\Notes\Model\NoteImage;
-use Intermesh\Modules\Notes\Model\NoteListItem;
 use Intermesh\Modules\Upload\Controller\ThumbControllerTrait;
 
 /**
@@ -19,9 +18,9 @@ use Intermesh\Modules\Upload\Controller\ThumbControllerTrait;
  * @author Wesley Smits <wsmits@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-class NoteController extends AbstractAuthenticationController{	
+class NoteController extends AbstractCrudController{	
 
-	use ThumbControllerTrait;
+//	use ThumbControllerTrait;
 	
 	public function actionAvailableColors(){
 		
@@ -139,13 +138,13 @@ class NoteController extends AbstractAuthenticationController{
 	}
 	
 	
-	protected function thumbGetFile() {
-		//TODO permissions!
-		return NoteImage::getImagesFolder()->createFile($_GET['src']);
-	}
-	
-	protected function thumbUseCache() {
-		return true;
-	}
-	
+//	protected function thumbGetFile() {
+//		//TODO permissions!
+//		return NoteImage::getImagesFolder()->createFile($_GET['src']);
+//	}
+//	
+//	protected function thumbUseCache() {
+//		return true;
+//	}
+//	
 }

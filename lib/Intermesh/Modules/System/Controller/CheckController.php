@@ -2,7 +2,7 @@
 namespace Intermesh\Modules\System\Controller;
 
 use Intermesh\Core\App;
-use Intermesh\Core\Controller\AbstractController;
+use Intermesh\Core\Controller\AbstractRESTController;
 use PDOException;
 
 /**
@@ -12,16 +12,16 @@ use PDOException;
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-class CheckController extends AbstractController{
+class CheckController extends AbstractRESTController{
 
-	protected $view = 'html';
+	
 
 	/**
 	 * Run system tests
 	 */
-	public function actionRun(){
+	public function httpGet(){
 
-		$this->view->render('html', "<h1>".App::config()->productName." system test</h1>");
+		echo "<h1>".App::config()->productName." system test</h1>";
 
 		$this->_check(
 						"PHP version",
@@ -100,6 +100,6 @@ class CheckController extends AbstractController{
 
 		$html .= '</span></p>';
 
-		$this->view->render('html', $html);
+		echo $html;
 	}
 }

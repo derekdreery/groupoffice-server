@@ -43,7 +43,7 @@ is correct:
 
 Now it should work. Do a system test:
 
-/index.php?r=intermesh/system/check/run
+/index.php?r=system/check
 
 It should output that all is OK ;). It doesn't look pretty but it's not meant to
 be because it's just an API.

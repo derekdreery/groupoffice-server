@@ -4,20 +4,20 @@ namespace Intermesh\Modules\Import\Controller;
 
 use Exception;
 use Intermesh\Core\App;
+use Intermesh\Core\Controller\AbstractRESTController;
 use Intermesh\Core\Db\Column;
 use Intermesh\Core\Db\Relation;
-use Intermesh\Modules\Auth\Controller\AbstractAuthenticationController;
 use Intermesh\Modules\Auth\Model\Role;
 use Intermesh\Modules\Contacts\Model\Contact;
 use Intermesh\Modules\Contacts\Model\ContactRole;
 
-class CsvController extends AbstractAuthenticationController {
+class CsvController extends AbstractRESTController {
 
 	public static $delimiter = ',';
 	public static $enclosure = '"';
 	private $_record;
 
-	public function actionReadFile() {
+	public function httpPost() {
 
 
 		//Don't be strict on imported values
