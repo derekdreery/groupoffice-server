@@ -1,16 +1,14 @@
 <?php
-
 namespace Intermesh\Modules\Auth\Controller;
 
 use Intermesh\Core\App;
 use Intermesh\Core\Controller\AbstractCrudController;
 use Intermesh\Core\Data\Store;
-use Intermesh\Core\Db\Criteria;
 use Intermesh\Core\Db\Query;
 use Intermesh\Core\Exception\NotFound;
-use Intermesh\Modules\Auth\Model\Role;
 use Intermesh\Modules\Auth\Model\User;
-use Intermesh\Modules\Auth\Model\UserRole;
+
+
 
 /**
  * The controller for users. Admin role is required.
@@ -22,9 +20,9 @@ use Intermesh\Modules\Auth\Model\UserRole;
 class UserController extends AbstractCrudController {
 
 
-	protected function authenticate() {
-		return parent::authenticate() && User::current()->isAdmin();
-	}
+//	protected function authenticate() {
+//		return parent::authenticate() && User::current()->isAdmin();
+//	}
 
 	/**
 	 * Fetch users

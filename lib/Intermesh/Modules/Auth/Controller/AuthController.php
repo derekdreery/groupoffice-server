@@ -55,13 +55,10 @@ class AuthController extends \Intermesh\Core\Controller\AbstractRESTController{
 			//todo remember for different clients
 			if(App::request()->payload['remember']){				
 				Token::generateSeries($user->id);				
-			}
-			
-			return $this->renderJson($response);
-		}else
-		{
-			return $this->renderError(401);
+			}			
 		}
+		
+		return $this->renderJson($response);
 
 		
 	}
