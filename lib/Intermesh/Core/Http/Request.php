@@ -44,7 +44,8 @@ class Request {
 			
 //			var_dump($rawPayload);
 			
-			$this->payload = json_decode($rawPayload, true);
+			
+			$this->payload = $rawPayload != "" ? json_decode($rawPayload, true) : [];
 					
 			// Check if the post is filled with an array. Otherwise make it an empty array.
 			if(!is_array($this->payload)){

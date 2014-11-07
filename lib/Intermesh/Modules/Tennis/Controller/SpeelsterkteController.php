@@ -8,9 +8,13 @@ use Intermesh\Modules\Contacts\Model\Contact;
 
 class SpeelsterkteController extends AbstractRESTController{
 	
+	protected function authenticate() {
+		return true;
+	}
+	
 	private $_url = 'http://publiek.mijnknltb.nl/spelersprofiel.aspx?bondsnummer=';
 	
-	public function actionUpdate(){
+	public function httpGet(){
 		
 		$q = Query::newInstance()
 				->joinRelation('customfields')
@@ -23,6 +27,7 @@ class SpeelsterkteController extends AbstractRESTController{
 		
 		$httpClient = new Client();
 		
+		$count++;
 		foreach($contacts as $contact){
 			$html = $httpClient->request($this->_url.$contact->customfields->Bondsnummer);
 			
@@ -35,7 +40,11 @@ class SpeelsterkteController extends AbstractRESTController{
 				var_dump($contact->customfields->getValidationErrors());
 			}
 //			break;
+			
+			$count++;
 		}
+		
+		return $this->renderJson(['success' => true, 'count' => $count]);
 		
 //		var_dump(\Intermesh\Core\App::debugger()->entries);
 		
