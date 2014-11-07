@@ -61,8 +61,13 @@ class UserController extends AbstractCrudController {
 	 * @return JSON Model data
 	 */
 	protected function actionRead($userId = null, $returnAttributes = []){
-	
-		$user = User::findByPk($userId);
+		
+		if($userId === "current"){
+			$user = User::current();
+		}else
+		{	
+			$user = User::findByPk($userId);
+		}
 
 		if (!$user) {
 			throw new NotFound();			
@@ -128,7 +133,12 @@ class UserController extends AbstractCrudController {
 	 */
 	public function actionUpdate($userId, $returnAttributes = []) {
 
-		$user = User::findByPk($userId);
+		if($userId === "current"){
+			$user = User::current();
+		}else
+		{	
+			$user = User::findByPk($userId);
+		}
 
 		if (!$user) {
 			throw new NotFound();

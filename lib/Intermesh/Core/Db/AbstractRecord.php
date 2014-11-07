@@ -571,12 +571,11 @@ abstract class AbstractRecord extends Model {
 			$this->_attributes[$name] = $value;
 		} else {
 			if (($col = $this->getColumn($name))) {
+				
 				$value = $col->formatInput($value);
-
-				if ((!isset($this->_attributes[$name]) && $value !== null) || ($value === null || ($this->_attributes[$name] !== $value && !$this->isModified($name)))) {
-					$this->_modifiedAttributes[$name] = isset($this->_attributes[$name]) ? $this->_attributes[$name] : null;
-				}
-				$this->_attributes[$name] = $value;
+				
+				$this->setAttribute($name, $value);
+				
 			} elseif(array_key_exists($name, $this->_attributes)){
 				$this->_attributes[$name] = $value;
 			} elseif (($relation = $this->getRelation($name))) {
@@ -601,6 +600,13 @@ abstract class AbstractRecord extends Model {
 				parent::__set($name, $value);
 			}
 		}
+	}
+	
+	protected function setAttribute($name, $value){
+		if ((!isset($this->_attributes[$name]) && $value !== null) || ($value === null || ($this->_attributes[$name] !== $value && !$this->isModified($name)))) {
+			$this->_modifiedAttributes[$name] = isset($this->_attributes[$name]) ? $this->_attributes[$name] : null;
+		}
+		$this->_attributes[$name] = $value;
 	}
 
 	/**

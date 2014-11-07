@@ -45,6 +45,15 @@ class User extends AbstractRecord {
 	 * @var string
 	 */
 	public $passwordConfirm;
+	
+	
+	/**
+	 * Non admin users must supply the currentPassword attribute when changing
+	 * the password.
+	 * 
+	 * @var string 
+	 */
+	public $currentPassword;
 
 	/**
 	 *
@@ -156,17 +165,45 @@ class User extends AbstractRecord {
 		
 		App::session()['userId'] = $this->id;
 	}
+	
+	
+	protected function setAttribute($name, $value) {
+		parent::setAttribute($name, $value);
+		
+		if($name == 'password'){
+			$this->digest = md5($this->username . ":" . App::config()->productName . ":" . $this->password);
+		}
+	}
+	
+	public function validate() {
+		if(parent::validate()){
+			if(!empty($this->password)){
+				$this->password = crypt($this->password);
+			}
+			return true;
+		}  else {
+			return false;
+		}
+	}
 
 	/**
 	 *
 	 * @inheritdoc
 	 */
 	public function save() {
-		if ($this->isModified('password') && !empty($this->password)) {
-			$this->digest = md5($this->username . ":" . App::config()->productName . ":" . $this->password);
+		
+		
+	
+		if ($this->isModified('password')) {
 			
-			App::debug($this->password);
-			$this->password = crypt($this->password);
+			//!User::current()->isAdmin() &&
+			if(!$this->checkPassword($this->currentPassword)){
+				$this->setValidationError('currentPassword', 'wrongPassword');
+				
+				return false;
+			}
+			
+			
 		}
 
 		$wasNew = $this->getIsNew();
@@ -224,7 +261,10 @@ class User extends AbstractRecord {
 	 * @return boolean
 	 */
 	public function checkPassword($password) {
-		return crypt($password, $this->password) === $this->password;
+		
+		$currentPassword = $this->isModified('password') ? $this->getOldAttributeValue('password') : $this->password;
+		
+		return crypt($password, $currentPassword) === $currentPassword;
 	}
 
 	/**
