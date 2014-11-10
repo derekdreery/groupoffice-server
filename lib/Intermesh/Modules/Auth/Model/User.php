@@ -184,7 +184,7 @@ class User extends AbstractRecord {
 	
 	public function validate() {
 		if(parent::validate()){
-			if(!empty($this->password)){
+			if(!empty($this->password) && $this->isModified('password')){
 				$this->password = crypt($this->password);
 			}
 			return true;
