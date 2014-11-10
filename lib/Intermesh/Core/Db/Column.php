@@ -2,6 +2,9 @@
 
 namespace Intermesh\Core\Db;
 
+use DateTime;
+use DateTimeZone;
+
 /**
  * Represents an ActiveRecord database column attribute.
  * 
@@ -102,14 +105,24 @@ class Column {
 			switch ($this->dbType) {
 
 				case 'datetime':
-					$dt = new \DateTime($value);
-					$dt->setTimezone(new \DateTimeZone("Etc/GMT"));
+					if($value instanceof DateTime){
+						$dt = $value;
+					}else
+					{
+						$dt = new DateTime($value);
+						$dt->setTimezone(new DateTimeZone("Etc/GMT"));
+					}
 					$value = $dt->format(self::DATETIME_DATABASE_FORMAT);
 					break;
 
 				case 'date':
 					//make sure date is formatted correctly
-					$dt = new \DateTime($value);
+					if($value instanceof DateTime){
+						$dt = $value;
+					}else
+					{
+						$dt = new DateTime($value);						
+					}
 					$value = $dt->format(self::DATE_FORMAT);
 					break;
 			}
@@ -128,7 +141,7 @@ class Column {
 		if (!empty($value)) {
 			switch ($this->dbType) {
 				case 'datetime':
-					$dt = new \DateTime($value, new \DateTimeZone("Etc/GMT"));
+					$dt = new DateTime($value, new DateTimeZone("Etc/GMT"));
 					$value = $dt->format(self::DATETIME_API_FORMAT);
 					break;
 			}

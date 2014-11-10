@@ -154,6 +154,10 @@ class Token extends AbstractRecord {
 		if ($token->token === $tokenHeader['token']) {
 
 			$token->user->setCurrent();
+			
+			$token->user->loginCount++;
+			$token->user->save();
+			
 			$token->generateToken();
 			$token->save();
 

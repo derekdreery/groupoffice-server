@@ -2,6 +2,7 @@
 
 namespace Intermesh\Modules\Auth\Model;
 
+use DateTime;
 use Intermesh\Core\App;
 use Intermesh\Core\Db\AbstractRecord;
 use Intermesh\Core\Db\RelationFactory;
@@ -113,7 +114,7 @@ class User extends AbstractRecord {
 	 * @param string $password
 	 * @return User|bool
 	 */
-	public static function login($username, $password) {
+	public static function login($username, $password, $count = true) {
 		$user = User::find(['username' => $username])->single();
 		
 		$success = true;
@@ -143,6 +144,12 @@ class User extends AbstractRecord {
 		if (!$success) {
 			return false;
 		} else {
+			
+			if($count) {
+				$user->loginCount++;
+				$user->lastLogin = new DateTime();
+				$user->save();
+			}
 
 			$user->setCurrent();
 
@@ -196,8 +203,7 @@ class User extends AbstractRecord {
 	
 		if ($this->isModified('password')) {
 			
-			//!User::current()->isAdmin() &&
-			if(!$this->checkPassword($this->currentPassword)){
+			if(!User::current()->isAdmin() && !$this->checkPassword($this->currentPassword)){
 				$this->setValidationError('currentPassword', 'wrongPassword');
 				
 				return false;

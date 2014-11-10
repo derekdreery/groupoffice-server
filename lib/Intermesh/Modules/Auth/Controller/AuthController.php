@@ -45,7 +45,7 @@ class AuthController extends \Intermesh\Core\Controller\AbstractRESTController{
 	public function httpPost(){
 		
 		
-		$user = User::login(App::request()->payload['username'], App::request()->payload['password']);
+		$user = User::login(App::request()->payload['username'], App::request()->payload['password'], true);
 		
 		$response = [
 				'success'=>$user!==false
