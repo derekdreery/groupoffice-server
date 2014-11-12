@@ -185,6 +185,8 @@ class Field extends AbstractRecord {
 	private function _resort(){		
 		
 		if($this->resort) {			
+			
+			App::debug("Resorting field ".$this->databaseName. " order: ".$this->sortOrder);
 
 			$fields = $this->fieldSet->fields;
 			
@@ -204,6 +206,10 @@ class Field extends AbstractRecord {
 				}
 
 				$field->sortOrder = $sortOrder;				
+				
+				
+				App::debug("Resorting field ".$field->databaseName. " order: ".$field->sortOrder);
+				
 				$field->save();
 			}
 		}		
