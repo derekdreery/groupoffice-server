@@ -3,7 +3,6 @@ Notes example module
 
 Read README.md first
 
-
 Create a "Notes" module with three models:
 
 1.Notebook (id, name, ownerUserId)
