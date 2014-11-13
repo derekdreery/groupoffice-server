@@ -1,0 +1,201 @@
+<?php
+
+namespace Intermesh\Modules\Email\Imap;
+
+class Structure {
+
+	/**
+	 *
+	 * @var Message 
+	 */
+	private $message;
+	
+	/**
+	 *
+	 * @var AbstractPart[] 
+	 */
+	public $parts;
+	
+	public function __construct(Message $message) {
+		$this->message = $message;	
+		
+		$struct = $this->getStructure();	
+				
+		if(is_array($struct[0])){
+			$this->parts[] = new MultiPart($message,"", $struct);
+		}else
+		{
+			$this->parts[] = new SinglePart($message, "1", $struct);
+		}
+		
+	}
+
+	private function parseStructure($structStr) {
+
+		$structStr = substr(trim($structStr), 1, -1);
+
+		//makes parsing easier
+		$structStr = str_replace(')(', ') (', $structStr);
+
+//		var_dump($structStr);
+
+		$array = str_split($structStr, 1);
+
+		$tokens = [];
+
+		$inQuotes = false;
+
+		$subLevel = 0;
+
+		$buffer = '';
+
+		for ($i = 0, $c = count($array); $i < $c; $i++) {
+
+			$char = $array[$i];
+
+			switch ($char) {
+				case '"':
+					
+					if($subLevel == 0) {
+						if (!$inQuotes) {
+							$inQuotes = true;
+						} else {
+							$inQuotes = false;
+						
+						}					
+					}else
+					{
+						$buffer .= $char;
+					}
+					
+					
+					
+					break;
+
+				case '(':
+					if(!$inQuotes){
+						$subLevel++;
+					}
+					$buffer .= $char;
+					break;
+
+				case ')':
+					if(!$inQuotes){
+						$subLevel--;
+					}
+
+//						if($subLevel > 0) {
+					$buffer .= $char;
+//						}
+
+					break;
+
+				case ' ':
+					if ($subLevel == 0 && !$inQuotes) {
+						$tokens[] = $buffer;
+						$buffer = "";
+					} else {
+						$buffer .= $char;
+					}
+					break;
+
+				default:
+					$buffer .= $char;
+					break;
+			}
+		}
+
+		$tokens[] = $buffer;
+		$buffer = "";
+
+		for ($i = 0, $c = count($tokens); $i < $c; $i++) {
+			if (substr($tokens[$i], 0, 1) == '(') {
+				$tokens[$i] = $this->parseStructure($tokens[$i]);
+			}
+		}
+
+
+		return $tokens;
+	}
+
+	public function getStructure() {
+		
+		$conn = $this->message->mailbox->connection;
+
+	
+		$struct = array();
+		$command = "UID FETCH " . $this->message->uid . " BODYSTRUCTURE";
+		$conn->sendCommand($command);
+		$response = $conn->getResponse();
+
+		$structStr = $response[0][0];
+
+		$startpos = strpos($structStr, "BODYSTRUCTURE");
+
+		$struct = $this->parseStructure(substr($structStr, $startpos + 14, -1));
+
+
+		return $struct;
+		
+	}
+	
+	private $_findParts;
+	
+	
+	
+	public function hasAlternativeBody($parts = null){		
+		
+		if(!isset($parts)){
+			$parts = $this->getParts();
+		}
+		
+		
+
+		foreach($parts as $part){
+			if($part instanceof SinglePart){
+				return false;
+			}else
+			{
+				if($part->type == 'alternative'){
+					return true;
+				}else
+				{
+					return $this->hasAlternativeBody($part->parts);
+				}
+			}
+		}
+	
+	}
+	
+	/**
+	 * Find parts by type
+	 * 
+	 * @param string $type
+	 * @param string $subtype
+	 * @param array $parts
+	 * @return SinglePart[]
+	 */
+	public function findParts($type='text', $subtype='html', $parts = null) {
+		
+		
+		$results  = [];
+		
+		if(!isset($parts)){
+			$parts = $this->parts;		
+		}
+		
+		foreach($parts as $part){
+			
+			
+			if($part->type == $type && $part->subtype == $subtype){
+				$results[] = $part;
+			}
+			
+			if($part instanceof MultiPart){
+				$results = array_merge($results, $this->findParts($type, $subtype, $part->parts));				
+			}
+		}
+		return $results;
+	}
+
+}

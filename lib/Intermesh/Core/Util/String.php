@@ -453,5 +453,27 @@ END;
 	public static function substr($string, $start, $length = null) {
 		return function_exists("mb_substr") ? mb_substr($string, $start, $length) : substr($string, $start, $length);
 	}
+	
+	
+	/**
+	 * Turn string with underscores into lowerCamelCase
+	 * 
+	 * eg. message_id or message-id will become messageId
+	 * 
+	 * @param string $str
+	 * @return string
+	 */
+	public static function lowerCamelCasify($str){
+		
+		$str = str_replace('-','_', strtolower($str));
+		
+		$parts = explode('_', $str);
+		
+		$str = array_shift($parts);
+		
+		$str .= implode('', array_map('ucfirst', $parts));
+		
+		return $str;		
+	}
 
 }

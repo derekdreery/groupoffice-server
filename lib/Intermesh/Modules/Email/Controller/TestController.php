@@ -16,7 +16,7 @@ use Intermesh\Modules\Email\Imap\Mailbox;
 class TestController extends AbstractRESTController {
 	protected function httpGet(){
 		
-		$response = ['mailboxes' => []];
+		$response = ['mailboxes' => [], 'messages'=>[]];
 		
 		$connection = new Connection('localhost', 143, 'admin@intermesh.dev', 'admin');
 		
@@ -28,15 +28,31 @@ class TestController extends AbstractRESTController {
 //		$mailboxes = $mailbox->getChildren();
 //		
 //		foreach($mailboxes as $mailbox){
-////			
-////			var_dump($mailbox);
-//			
 //			$response['mailboxes'][] = ['name' => $mailbox->name, 'unseenCount' => $mailbox->getUnseenCount(), 'messagesCount' => $mailbox->getMessagesCount()];
 //		}
+//		
+		
+		
 		
 		$mailbox = Mailbox::findByName($connection, "INBOX");
 		
-		$mailbox->getMessages();
+		$messages = $mailbox->getMessages('DATE', true,1,0);
+		
+		foreach($messages as $message){
+			
+			
+//			echo  $message->getBody();
+			
+			
+			$atts = $message->getAttachments();
+			
+			$atts[0]->output();
+			exit();
+
+			
+			//$response['messages'][] = ['subject' => $message->subject, 'date' => $message->date->format('Y-m-d H:i')];
+//			$response['messages'][] = $message->toArray();
+		}
 		
 		
 		return $this->renderJson($response);

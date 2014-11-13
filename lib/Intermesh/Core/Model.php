@@ -2,6 +2,9 @@
 
 namespace Intermesh\Core;
 
+use ReflectionClass;
+use ReflectionProperty;
+
 /**
  * The abstract model class. It implements validation.
  * 
@@ -80,10 +83,27 @@ abstract class Model extends AbstractObject {
 		$arr = ['attributes' => []];
 
 		if (empty($attributes)) {
-			$arr['attributes'] = (array) $this;
+			
+			$reflection = new ReflectionClass($this);
+			
+			$props = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
+			foreach($props as $prop){
+				
+				if(!$prop->isStatic()){
+					$name = $prop->getName();
+					
+					$value = $this->$name;
+					
+					if(is_object($value) && method_exists($value, 'toArray')){
+						$value = $value->toArray();
+					}
+
+					$arr['attributes'][$name] = $value;
+				}
+			}
 		} else {
 			foreach ($attributes as $attribute) {
-				$arr['attributes'][$attribute] = $this->attribute;
+				$arr['attributes'][$attribute] = $this->$attribute;
 			}
 		}
 

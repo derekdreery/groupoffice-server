@@ -177,24 +177,31 @@ class Connection {
 	}
 	
 	public $lastCommandSuccessful = false;
+	
+	
+	
+	public function readLine($length = 8192){
+		$line = fgets($this->getHandle(), $length);
+
+		App::debug('< ' . $line, 'imap');	
+		
+		return $line;
+	}
 
 	/**
 	 * Returns text response in array
 	 * 
 	 * @return array
 	 */
-	public function getResponse($parsed = false) {
+	public function getResponse(Streamer $streamer = null) {
 
 		$response = [];
 
-		$handle = $this->getHandle();
 		
-		//$data = "";
 
 		do {
-			$chunk = trim(fgets($handle, 8192));
+			$chunk = trim($this->readLine());
 
-			App::debug('< ' . $chunk, 'imap');	
 			
 //			echo $chunk."\n";
 			
@@ -216,7 +223,7 @@ class Connection {
 
 				if($startpos){
 					$size = substr($chunk, $startpos+1, -1);						
-					$data[] = $this->getLiteralDataResponse($size);
+					$data[] = $this->getLiteralDataResponse($size, $streamer);
 				}
 			}
 			
@@ -240,97 +247,34 @@ class Connection {
 	}
 	
 
-	public function getLiteralDataResponse($size) {
-		
-		$handle = $this->getHandle();
-		
+	public function getLiteralDataResponse($size, Streamer $streamer = null) {
 		$max = 8192 > $size ? $size : 8192;
 		
+		$readLength = 0;
 		$data = "";
 		do{
-			$chunk = fgets($handle, $max);
-			App::debug('< ' . $chunk, 'imap');
 			
-			$data .= $chunk;
+			$line = $this->readLine($max);
 			
-		}while (strlen($data) < $size);			
+			$readLength += strlen($line);
+			
+			if(isset($streamer)){
+				$streamer->put($line);
+			}else
+			{			
+				$data .= $line;
+			}
+			
+		}while ($readLength < $size);			
 	
-		return $data;
-	}
-
-	private function parseResponseLine($line) {
-		
-		$trimmedLine = trim($line);
-		
-		$parts = explode(' ', $trimmedLine);
-
-		$cmd = isset($parts[1]) ? strtoupper($parts[1]) : null;
-		
-		switch ($cmd) {
-
-			case 'LIST':
-			case 'LSUB':
-				
-				//* LIST (\HasNoChildren) "/" Trash"
-				return Mailbox::createFromImapListResponse($this, $parts);
-
-
-			case 'STATUS':
-				
-				//* STATUS blurdybloop (MESSAGES 231 UIDNEXT 44292)
-				
-				return $this->_parseStatusResponse($parts);
-				
-			default:
-		
-				
-				if(substr($trimmedLine,-1,1) == '}'){
-					$startpos = strrpos($trimmedLine, '{');
-					
-					if($startpos){
-						$size = substr($trimmedLine, $startpos+1, -1);						
-						return [substr($trimmedLine, 0, $startpos-1), $this->getLiteralDataResponse($size)];
-					}
-				}
-				
-				return $line;
-
-				
+		if(isset($streamer)){
+			$streamer->finish();
+			return null;
+		}else
+		{
+			return $data;
 		}
 	}
-	
-	private function _parseStatusResponse(array $parts){
-		
-		$response = ['mailbox' => $parts[2]];
-		
-		for($i = 3, $c = count($parts); $i < $c; $i++){
-			
-			$name = trim($parts[$i], ' ()');
-			
-			$i++;
-			
-			$value = trim($parts[$i], ' ()');
-			
-			$response[strtolower($name)] = intval($value);
-		}
-		
-		return $response;
-		
-	}
-
-//	public function isResponseSuccessfull(array $response) {
-////		foreach($response as $line){
-//
-//		$line = array_pop($response);
-//
-//		return stripos($line, 'A' . $this->commandCount . ' OK') !== false;
-//
-////			if($success){
-////				return true;
-////			}
-////		}
-////		return false;
-//	}
 
 	private $commandCount = 0;
 

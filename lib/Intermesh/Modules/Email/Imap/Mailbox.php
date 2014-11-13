@@ -7,7 +7,11 @@ use Intermesh\Core\AbstractObject;
 
 class Mailbox extends AbstractObject {
 	
-	private $connection;
+	/**
+	 *
+	 * @var Connection 
+	 */
+	public $connection;
 	
 	public $name;
 	
@@ -22,6 +26,10 @@ class Mailbox extends AbstractObject {
 		parent::__construct();
 
 		$this->connection = $connection;
+	}
+	
+	public function __toString() {
+		return $this->name;
 	}
 	
 	/**
@@ -42,14 +50,9 @@ class Mailbox extends AbstractObject {
 		
 		$response = $connection->getResponse();
 		
-//		var_dump($response);
-		
-//		exit();
-		
-//		var_dump($mailboxes);
+
 		
 		if($connection->lastCommandSuccessful){
-//			var_dump($response[0]);
 			return self::createFromImapListResponse($connection, explode(' ',$response[0][0]));
 		}else
 		{
@@ -96,16 +99,30 @@ class Mailbox extends AbstractObject {
 
 			$this->connection->sendCommand($cmd);
 
-			$response = $this->connection->getResponse(true);
+			$response = $this->connection->getResponse();
 
 			if(!$this->connection->lastCommandSuccessful){
 				throw new Exception("Could not fetch status from server");
 			}
-
-			$this->_status = $response[0];
-		}
+			
 		
-//		var_dump($this->_status);
+			$parts = explode(' ', $response[0][0]);
+		
+			$status = ['mailbox' => $parts[1]];
+
+			for($i = 2, $c = count($parts); $i < $c; $i++){
+
+				$name = trim($parts[$i], ' ()');
+
+				$i++;
+
+				$value = trim($parts[$i], ' ()');
+
+				$status[strtolower($name)] = intval($value);
+			}	
+
+			$this->_status = $status;
+		}
 		
 		return $this->_status;
 	}
@@ -150,14 +167,36 @@ class Mailbox extends AbstractObject {
 		
 		$this->connection->sendCommand($cmd);
 		
-		return $this->connection->getResponse(true);		
+		$response = $this->connection->getResponse();	
+		
+		$mailboxes = [];
+		while($responseLine = array_shift($response)){
+			$mailboxes[] = self::createFromImapListResponse($this->connection, explode(' ',$responseLine[0]));
+		}
+		
+		return $mailboxes;
 	}
 	
-	
-	public function getMessages(){
-		$uids = $this->serverSideSort();
+	/**
+	 * 
+	 * @return Message
+	 */
+	public function getMessages($sort = 'DATE', $reverse = true, $limit = 10, $offset = 0){
+		$uids = $this->serverSideSort($sort, $reverse);
 		
-		$this->getMessageHeaders($uids);
+		if($limit>0){
+			$uids = array_slice($uids, $offset, $limit);
+		}
+		
+		$headers = $this->getMessageHeaders($uids);
+		
+		$messages = [];
+		
+		foreach($headers as $response){			
+			$messages[] = Message::createFromImapResponse($this, $response);
+		}
+		
+		return $messages;
 	}
 	
 	private function select(){
@@ -189,20 +228,22 @@ class Mailbox extends AbstractObject {
 		if(!$this->connection->lastCommandSuccessful){
 			return false;
 		}
-		
-		$fn = $reverse ? "array_pop" : "array_shift";
-		
+
 		
 		$uids = [];
 		
 		//remove OK line.
 		array_pop($response[0]);
 		
-		while($line = $fn($response[0])) {
+		while($line = array_shift($response[0])) {
 			
 			$vals = explode(" ", trim(str_replace('SORT', '', $line)));		
 			$uids = array_merge($uids, $vals);
 			
+		}
+		
+		if($reverse){
+			$uids = array_reverse($uids);
 		}
 	
 		return $uids;
@@ -255,19 +296,11 @@ class Mailbox extends AbstractObject {
 
 //		var_dump($res);
 			
-		foreach($res as $response){
-			
-//			var_dump($response);
-//			exit();
-//			
-			Message::createFromImapResponse($response);
-			
-			
-		}
 		
 		
 		
-		return;
+		
+		return $res;
 		
 //		exit();
 		

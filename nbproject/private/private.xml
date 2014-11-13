@@ -2,6 +2,17 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group name="PocketOffice"/>
+        <group name="PocketOffice">
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Email/Imap/Mailbox.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Imap/Model/Attachment.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Email/Model/Account.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Email/Controller/TestController.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Email/EmailModule.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Upload/UploadModule.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Upload/Controller/FlowController.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Email/Imap/Connection.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Email/Imap/Utils.php</file>
+            <file>file:/var/www/html/groupoffice-server/lib/Intermesh/Modules/Email/Imap/Message.php</file>
+        </group>
     </open-files>
 </project-private>
