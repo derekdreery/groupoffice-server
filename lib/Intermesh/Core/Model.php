@@ -110,7 +110,7 @@ abstract class Model extends AbstractObject {
 			}
 			
 			if(is_array($value)){
-				if(is_object($value[0]) && method_exists($value[0], 'toArray')){
+				if(isset($value[0]) && is_object($value[0]) && method_exists($value[0], 'toArray')){
 					
 					$arr['attributes'][$attribute] = [];
 					

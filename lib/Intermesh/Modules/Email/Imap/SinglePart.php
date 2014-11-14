@@ -114,7 +114,7 @@ class SinglePart extends AbstractPart{
 			return $value;
 
 		}  else {			
-			return $v;
+			return $v != 'NIL' ? $v : null;
 		}
 	}
 	

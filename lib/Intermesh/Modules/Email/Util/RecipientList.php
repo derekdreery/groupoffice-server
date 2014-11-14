@@ -92,7 +92,7 @@ class RecipientList implements ArrayAccess{
 	 * @var     string
 	 * @access  private
 	 */
-	private $_personal = false;
+	private $_personal = null;
 
 	/**
 	 * Temporary storage
@@ -195,7 +195,7 @@ class RecipientList implements ArrayAccess{
 			}
 		}
 		$this->_buffer = '';
-		$this->_personal = false;
+		$this->_personal = null;
 		$this->_emailFound = false;
 		$this->_quote = false;
 	}

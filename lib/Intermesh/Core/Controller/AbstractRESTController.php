@@ -11,6 +11,7 @@ use Intermesh\Core\Db\AbstractRecord;
 use Intermesh\Core\Exception\HttpException;
 use Intermesh\Core\Exception\MissingControllerActionParameter;
 use Intermesh\Core\Http\Router;
+use Intermesh\Core\Model;
 use Intermesh\Modules\Auth\Model\User;
 use ReflectionMethod;
 
@@ -258,7 +259,7 @@ abstract class AbstractRESTController extends AbstractObject {
 	 * @param AbstractRecord[] $models
 	 * @return type
 	 */
-	protected function renderModel(AbstractRecord $model, $returnAttributes = []) {
+	protected function renderModel(Model $model, $returnAttributes = null) {
 
 
 		if (App::request()->getMethod() == 'GET' && isset($model->modifiedAt)) {
@@ -270,11 +271,11 @@ abstract class AbstractRESTController extends AbstractObject {
 
 		if (isset($returnAttributes)) {
 			$returnAttributes = AbstractRecord::parseReturnAttributes($returnAttributes);
+			$response['data'] = $model->toArray($returnAttributes);
 		} else {
-			$returnAttributes = [];
+			$response['data'] = $model->toArray();
 		}
-
-		$response['data'] = $model->toArray($returnAttributes);
+		
 		$response['success'] = !$model->hasValidationErrors();
 
 

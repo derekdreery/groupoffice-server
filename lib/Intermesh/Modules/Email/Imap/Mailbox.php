@@ -3,7 +3,7 @@
 namespace Intermesh\Modules\Email\Imap;
 
 use Exception;
-use Intermesh\Core\AbstractObject;
+use Intermesh\Core\Model;
 
 /**
  * Mailbox object
@@ -44,7 +44,7 @@ use Intermesh\Core\AbstractObject;
  * @author Merijn Schering <mschering@intermesh.nl>
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
-class Mailbox extends AbstractObject {
+class Mailbox extends Model {
 	
 	/**
 	 *
@@ -100,7 +100,7 @@ class Mailbox extends AbstractObject {
 	/**
 	 * Constructor
 	 * 
-	 * @param \Intermesh\Modules\Email\Imap\Connection $connection
+	 * @param Connection $connection
 	 */
 	public function __construct(Connection $connection) {
 		parent::__construct();
@@ -121,7 +121,7 @@ class Mailbox extends AbstractObject {
 	 * 
 	 * @param string $name
 	 * @param string $reference
-	 * @return self|boolean
+	 * @return Mailbox|boolean
 	 */
 	public static function findByName(Connection $connection, $name, $reference = ""){
 		
@@ -317,6 +317,25 @@ class Mailbox extends AbstractObject {
 	}
 	
 	/**
+	 * Fetch a single message
+	 * 
+	 * @param int $uid
+	 * @return Message
+	 */
+	public function getMessage($uid){
+		
+		
+		if(!$this->selected) {
+			$this->select();
+		}
+		
+		$headers = $this->getMessageHeaders([$uid]);	
+		
+		
+		return Message::createFromImapResponse($this, $headers[0]);
+	}
+	
+	/**
 	 * Select this mailbox on the IMAP server
 	 * 
 	 * @return boolean
@@ -392,7 +411,7 @@ class Mailbox extends AbstractObject {
 
 		$sorted_string = implode(',', $uids);
 		
-		$command = 'UID FETCH '.$sorted_string.' (FLAGS INTERNALDATE RFC822.SIZE BODY.PEEK[HEADER.FIELDS (SUBJECT FROM DATE CONTENT-TYPE X-PRIORITY TO CC BCC REPLY-TO DISPOSITION-NOTIFICATION-TO CONTENT-TRANSFER-ENCODING MESSAGE-ID)])';
+		$command = 'UID FETCH '.$sorted_string.' (FLAGS INTERNALDATE RFC822.SIZE BODY.PEEK[HEADER.FIELDS (SUBJECT FROM DATE CONTENT-TYPE X-PRIORITY TO CC BCC REPLY-TO DISPOSITION-NOTIFICATION-TO MESSAGE-ID)])';
 
 		$this->connection->sendCommand($command);
 		$res = $this->connection->getResponse();
@@ -450,5 +469,9 @@ class Mailbox extends AbstractObject {
 //		$this->send_command($command);
 //		$response = $this->get_response();
 //		return $this->check_response($response);
+	}
+	
+	public function toArray(array $attributes = array('name','delimiter','flags', 'unseencount', 'messagescount', 'uidnext')) {
+		return parent::toArray($attributes);
 	}
 }

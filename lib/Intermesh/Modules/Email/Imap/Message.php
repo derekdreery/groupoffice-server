@@ -3,8 +3,11 @@
 namespace Intermesh\Modules\Email\Imap;
 
 use DateTime;
+use Intermesh\Core\Db\Column;
 use Intermesh\Core\Model;
 use Intermesh\Core\Util\String;
+use Intermesh\Modules\Email\Util\Recipient;
+use Intermesh\Modules\Email\Util\RecipientList;
 
 
 /**
@@ -18,6 +21,13 @@ use Intermesh\Core\Util\String;
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
 class Message extends Model {
+	
+	
+	const XPRIORITY_HIGH = 1;
+	
+	const XPRIORITY_NORMAL = 3;
+	
+	CONST XPRIORITY_LOW = 5;
 
 	/**
 	 *
@@ -65,7 +75,7 @@ class Message extends Model {
 	/**
 	 * The from address
 	 * 
-	 * @var \Intermesh\Modules\Email\Util\Recipient 
+	 * @var Recipient 
 	 */
 	public $from;
 	
@@ -128,19 +138,15 @@ class Message extends Model {
 	 * 
 	 * @var string 
 	 */
-	public $xPriority;
+	public $xPriority = self::XPRIORITY_NORMAL;
 	
-	/**
-	 * Do we need this???
-	 * 
-	 * @var string 
-	 */
-	public $contentTransferEncoding;
+	
+//	public $contentTransferEncoding;
 	
 	/**
 	 * Send a notification to this address
 	 * 
-	 * @var \Intermesh\Modules\Email\Util\Recipient 
+	 * @var Recipient 
 	 */
 	public $dispositionNotificationTo;
 	
@@ -164,24 +170,62 @@ class Message extends Model {
 	 */
 	public static function createFromImapResponse(Mailbox $mailbox, array $response) {
 		
-		$message = new Message($mailbox);
+		$message = new Message($mailbox);		
 		
-		$start = strpos($response[0], 'UID');
-		$end = strpos($response[0], 'BODY');
 
-		$line = substr($response[0], $start, $end - $start - 1);
+		$attr = array_merge(
+				self::_parseFetchResponse($response[0]), 
+				self::_parseHeaders($response[1]));
+		
+		
+		foreach($attr as $prop => $value){
+			
+			if(property_exists($message, $prop)){
+				
+				if(in_array($prop, self::$mimeDecodeAttributes)){
+					$value = Utils::mimeHeaderDecode($value);
+				}
+				
+				if($prop == 'to' || $prop == 'cc' || $prop == 'bcc'){
+					$list = new RecipientList($value);
+					$value = $list->toArray();
+				}
+				
+				
+				if($prop == 'from' || $prop == 'replyTo' || $prop == 'displayNotificationTo'){
+					$list = new RecipientList($value);
+					$value = $list[0];
+				}
+				
+				$message->$prop = $value;
+			}
+		}
+
+		return $message;
+	}
+	
+	
+	private static function _parseFetchResponse($response){
+		
+		$attr = [];
+				
+		$start = strpos($response, 'UID');
+		$end = strpos($response, 'BODY');
+
+		$line = substr($response, $start, $end - $start - 1);
 
 		$arr = str_getcsv($line, ' ');
 
 		for ($i = 0, $c = count($arr); $i < $c; $i++) {
 			$name = String::lowerCamelCasify($arr[$i]);
 			
+			$value = $arr[$i + 1];
+			
 			if($name == 'rfc822.size'){
 				$name = 'size';
+				
+				$value = intval($value);
 			}
-
-			$value = $arr[$i + 1];
-
 
 			if (substr($value, 0, 1) == '(') {
 				$values = [];
@@ -202,15 +246,19 @@ class Message extends Model {
 				$i++;
 			}
 		}
+		
+		return $attr;
+	}
+	
+	private static function _parseHeaders($headers){
+		
+		$attr = [];
+		
+		$headers = str_replace("\r", "", trim($headers));
+		$headers = preg_replace("/\n[\s]+/", "", $headers);
 
 
-		//headers
-
-		$response[1] = str_replace("\r", "", trim($response[1]));
-		$response[1] = preg_replace("/\n[\s]+/", "", $response[1]);
-
-
-		$lines = explode("\n", $response[1]);
+		$lines = explode("\n", $headers);
 
 		foreach ($lines as $line) {
 			$parts = explode(':', $line);
@@ -228,37 +276,19 @@ class Message extends Model {
 			//
 			//$message['date']=preg_replace('/\([^\)]*\)/','', $message['date']);
 			
-			$attr['date'] = new DateTime($attr['date']);
+			$attr['date'] = date(Column::DATETIME_API_FORMAT,strtotime($attr['date']));
 		}
 		
 		if(isset($attr['internaldate'])){
-			$attr['internaldate'] = new DateTime($attr['internaldate']);
+			$attr['internaldate'] = date(Column::DATETIME_API_FORMAT,strtotime($attr['internaldate']));
 		}
 		
-		foreach($attr as $prop => $value){
-			
-			if(property_exists($message, $prop)){
-				
-				if(in_array($prop, self::$mimeDecodeAttributes)){
-					$value = Utils::mimeHeaderDecode($value);
-				}
-				
-				if($prop == 'to' || $prop == 'cc' || $prop == 'bcc'){
-					$list = new \Intermesh\Modules\Email\Util\RecipientList($value);
-					$value = $list->toArray();
-				}
-				
-				
-				if($prop == 'from' || $prop == 'replyTo' || $prop == 'displayNotificationTo'){
-					$list = new \Intermesh\Modules\Email\Util\RecipientList($value);
-					$value = $list[0];
-				}
-				
-				$message->$prop = $value;
-			}
+		
+		if(isset($attr['xPriority'])){
+			$attr['xPriority'] = intval($attr['xPriority']);			
 		}
-
-		return $message;
+		
+		return $attr;
 	}
 	
 	
@@ -317,7 +347,12 @@ class Message extends Model {
 		
 		$attachments = [];
 		
-//		var_dump($this->getStructure()->parts);
+		//var_dump($this->getStructure()->parts);
+		
+		if($this->getStructure()->parts[0]->subtype=='alternative'){
+			return [];
+		}
+		
 		
 		if(count($this->getStructure()->parts) == 1 && $this->getStructure()->parts[0]->type == 'multipart'){
 			$parts = $this->getStructure()->parts[0]->parts;

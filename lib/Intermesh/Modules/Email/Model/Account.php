@@ -1,10 +1,11 @@
 <?php
-namespace Intermesh\Modules\Imap\Model;
+namespace Intermesh\Modules\Email\Model;
 
 use Intermesh\Core\Db\AbstractRecord;
 use Intermesh\Core\Db\RelationFactory;
 use Intermesh\Modules\Auth\Model\User;
 use Intermesh\Modules\Email\Imap\Connection;
+use Intermesh\Modules\Email\Imap\Mailbox;
 
 
 /**
@@ -28,6 +29,8 @@ use Intermesh\Modules\Email\Imap\Connection;
 class Account extends AbstractRecord {
 	
 	private $_connection;
+	
+	private $_rootMailbox;
 
 	protected static function defineRelations(RelationFactory $r) {
 		return [
@@ -54,6 +57,31 @@ class Account extends AbstractRecord {
 		}
 
 		return $this->_connection;
+	}
+	
+	/**
+	 * Get the root mailbox
+	 * 
+	 * @return Mailbox
+	 */
+	public function getRootMailbox(){
+		
+		if(!isset($this->_rootMailbox)){
+			$this->_rootMailbox = new Mailbox($this->getConnection());
+		}
+		return $this->_rootMailbox;
+	}
+	
+	/**
+	 * Finds a mailbox by name
+	 * 
+	 * 
+	 * @param string $mailboxName
+	 * @param string $reference
+	 * @return Mailbox|boolean
+	 */
+	public function findMailbox($mailboxName, $reference = ""){
+		return Mailbox::findByName($this->getConnection(), $mailboxName, $reference);		
 	}
 
 
