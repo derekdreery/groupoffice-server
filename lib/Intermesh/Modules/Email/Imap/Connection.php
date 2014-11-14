@@ -89,6 +89,33 @@ class Connection {
 	}
 	
 	/**
+	 * Disconneect from the IMAP server
+	 * 
+	 * @return boolean
+	 */
+	public function disconnect() {
+		if (is_resource($this->handle)) {
+			$command = "LOGOUT";
+			$this->sendCommand($command);
+			$this->autentcated = false;
+			
+			$response = $this->getResponse();
+			
+			fclose($this->handle);
+
+//			foreach($this->errors as $error){
+//				trigger_error("IMAP error: ".$error);
+//			}
+
+			$this->handle = null;
+
+			return true;
+		}else {
+			return false;
+		}
+	}
+	
+	/**
 	 * Checks if authentication was made
 	 * 
 	 * @return boolean
@@ -338,6 +365,40 @@ class Connection {
 	private function commandNumber() {
 		$this->commandCount++;
 		return $this->commandCount;
+	}
+	
+	
+	
+	/**
+	 * Get's an array with two keys. usage and limit in bytes.
+	 *
+	 *  @todo
+	 * @return <type>
+	 */
+	public function getQuota() {
+
+		if(!$this->has_capability("QUOTA"))
+			return false;
+
+		$command = "GETQUOTAROOT \"INBOX\"\r\n";
+
+		$this->send_command($command);
+		$res = $this->get_response();
+		$status = $this->check_response($res);
+		if($status){
+			foreach($res as $response){
+				if(strpos($response, 'STORAGE')!==false){
+					$parts = explode(" ", $response);
+					$storage_part = array_search("STORAGE", $parts);
+					if ($storage_part>0){
+						return array(
+							'usage'=>intval($parts[$storage_part+1]),
+							'limit'=>intval($parts[$storage_part+2]));
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 }

@@ -9,6 +9,35 @@ use Intermesh\Core\AbstractObject;
  * Mailbox object
  * 
  * Handles all mailbox related IMAP functions
+ * 
+ * <code>
+ * 
+ * //Get root folders
+ * $mailbox = new \Intermesh\Modules\Email\Imap\Mailbox($connection);
+		
+		$mailboxes = $mailbox->getChildren();
+		
+		foreach($mailboxes as $mailbox){
+			$response['mailboxes'][] = [
+				'name' => $mailbox->name, 
+				'unseenCount' => $mailbox->getUnseenCount(), 
+				'messagesCount' => $mailbox->getMessagesCount(),
+				'uidnext' => $mailbox->getUidnext()
+					];
+		}
+ * 
+ * 
+ * //Fetch messages
+ * 
+ * $mailbox = Mailbox::findByName($connection, "INBOX");
+		
+	$messages = $mailbox->getMessages('DATE', true,1,0);
+
+	foreach($messages as $message){
+		 $response['data'] = $message->toArray(['subject','from', 'to', 'body', 'attachments']);
+ *	}
+ * 
+ * </code>
  *
  * 
  * @copyright (c) 2014, Intermesh BV http://www.intermesh.nl
@@ -54,6 +83,15 @@ class Mailbox extends AbstractObject {
 	 * @var string 
 	 */
 	public $flags = [];
+	
+	
+	/**
+	 * True if this mailbox was selected using the SELECT mailbox command
+	 * 
+	 * @var boolean 
+	 */
+	public $selected = false;
+	
 	
 	
 	private $_status;
@@ -153,7 +191,7 @@ class Mailbox extends AbstractObject {
 	private function getStatus(){
 		
 		if(!isset($this->_status)){
-			$cmd = 'STATUS "'.Utils::escape(Utils::utf7Encode($this->name)).'" (MESSAGES UNSEEN)';
+			$cmd = 'STATUS "'.Utils::escape(Utils::utf7Encode($this->name)).'" (MESSAGES UNSEEN UIDNEXT)';
 
 			$this->connection->sendCommand($cmd);
 
@@ -194,6 +232,17 @@ class Mailbox extends AbstractObject {
 		$status = $this->getStatus();
 		
 		return $status['unseen'];
+	}
+	
+	/**
+	 * Get the next uid for the mailbox
+	 * 
+	 * @return int
+	 */
+	public function getUidnext(){
+		$status = $this->getStatus();
+		
+		return $status['uidnext'];
 	}
 	
 	/**
@@ -273,11 +322,14 @@ class Mailbox extends AbstractObject {
 	 * @return boolean
 	 */
 	private function select(){
+		
 		$command = 'SELECT "'.Utils::escape(Utils::utf7Encode($this->name)).'"';
 		
 		$this->connection->sendCommand($command);
 		
 		$this->connection->getResponse();
+		
+		$this->selected = $this->connection->lastCommandSuccessful;
 		
 		return $this->connection->lastCommandSuccessful;
 	}
@@ -294,7 +346,9 @@ class Mailbox extends AbstractObject {
 	 */
 	private function serverSideSort($sort = 'DATE', $reverse = true, $filter="ALL") {
 		
-		$this->select();
+		if(!$this->selected) {
+			$this->select();
+		}
 		
 		$command = 'UID SORT ('.$sort.') UTF-8 '.$filter;
 		
@@ -345,5 +399,56 @@ class Mailbox extends AbstractObject {
 		
 		return $res;
 		
+	}
+	
+	
+	
+	/**
+	 * @todo
+	 */
+	public function getAcl(){
+
+		$mailbox = Utils::escape(Utils::utf7Encode($this->name));
+
+		$command = 'GETACL "'.$mailbox.'"';
+		$this->connection->sendCommand($command);
+//		$response = $this->get_response(false, true);
+//
+//		$ret = array();
+//
+//		foreach($response as $line)
+//		{
+//			if($line[0]=='*' && $line[1]=='ACL' && count($line)>3){
+//				for($i=3,$max=count($line);$i<$max;$i+=2){
+//					$ret[]=array('identifier'=>$line[$i],'permissions'=>$line[$i+1]);
+//				}
+//			}
+//		}
+//
+//		return $ret;
+	}
+
+	public function setAcl($identifier, $permissions){
+
+//		$mailbox = $this->utf7_encode($this->_escape( $mailbox));
+//		$this->clean($mailbox, 'mailbox');
+//
+//		$command = "SETACL \"$mailbox\" $identifier $permissions\r\n";
+//		//throw new \Exception($command);
+//		$this->send_command($command);
+//
+//		$response = $this->get_response();
+//
+//		return $this->check_response($response);
+	}
+
+	public function deleteAcl($identifier){
+//		$mailbox = $this->utf7_encode($this->_escape( $mailbox));
+//		$this->clean($mailbox, 'mailbox');
+//
+//		$command = "DELETEACL \"$mailbox\" $identifier\r\n";
+//		$this->send_command($command);
+//		$response = $this->get_response();
+//		return $this->check_response($response);
 	}
 }

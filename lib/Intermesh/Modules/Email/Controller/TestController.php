@@ -28,7 +28,12 @@ class TestController extends AbstractRESTController {
 		$mailboxes = $mailbox->getChildren();
 		
 		foreach($mailboxes as $mailbox){
-			$response['mailboxes'][] = ['name' => $mailbox->name, 'unseenCount' => $mailbox->getUnseenCount(), 'messagesCount' => $mailbox->getMessagesCount()];
+			$response['mailboxes'][] = [
+				'name' => $mailbox->name, 
+				'unseenCount' => $mailbox->getUnseenCount(), 
+				'messagesCount' => $mailbox->getMessagesCount(),
+				'uidnext' => $mailbox->getUidnext()
+					];
 		}
 		
 		
@@ -41,10 +46,10 @@ class TestController extends AbstractRESTController {
 		foreach($messages as $message){
 			
 			
-			 $message->getBody();
+//			 $message->getBody();
 			
 			
-//			$response['data'] = $message->toArray(['subject','from', 'to', 'body', 'attachments']);
+			$response['data'] = $message->toArray(['subject','from', 'to', 'body', 'attachments']);
 			
 //			$atts = $message->getAttachments();
 			

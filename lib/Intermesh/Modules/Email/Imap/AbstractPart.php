@@ -72,7 +72,7 @@ abstract class AbstractPart extends Model {
 			$parts[(count($parts) - 1)] ++;
 			$partNumber = implode('.', $parts);
 		}
-		return $partNumber;
+		return (string) $partNumber;
 	}
 
 	/**

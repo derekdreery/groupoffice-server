@@ -12,15 +12,15 @@ use Intermesh\Core\Util\String;
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
 class Utils {
-	
+
 	/**
 	 * Escape a value for an IMAP command
 	 * 
 	 * @param string$str
 	 * @return string
 	 */
-	public static function escape($str){
-		return str_replace(array('\\','"'), array('\\\\','\"'), $str);
+	public static function escape($str) {
+		return str_replace(array('\\', '"'), array('\\\\', '\"'), $str);
 	}
 
 	/**

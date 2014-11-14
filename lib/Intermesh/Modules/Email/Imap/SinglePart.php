@@ -3,7 +3,7 @@
 namespace Intermesh\Modules\Email\Imap;
 
 use Exception;
-use Intermesh\Modules\Imap\Model\Message;
+use Intermesh\Modules\Email\Imap\Message;
 
 /**
  * SinglePart class
@@ -72,6 +72,11 @@ class SinglePart extends AbstractPart{
 						'size', 'lines', 'disposition', 'md5', 'language', 'location');
 		
 		for($i = 0, $c = count($struct); $i < $c; $i++) {
+			
+			if($atts[$i] == 'size'){
+				$struct[$i] = intval($struct[$i]);
+			}
+			
 			$this->{$atts[$i]} = $this->_parseValue($struct[$i]);
 		}
 	}
@@ -108,7 +113,7 @@ class SinglePart extends AbstractPart{
 			
 			return $value;
 
-		}  else {
+		}  else {			
 			return $v;
 		}
 	}
@@ -163,4 +168,11 @@ class SinglePart extends AbstractPart{
 		
 		$this->getData(true, $streamer);
 	}	
+	
+	
+	public function toArray(array $attributes = ['filename', 'encoding','size','partNumber']) {
+		return parent::toArray($attributes);
+	}
+	
+	
 }

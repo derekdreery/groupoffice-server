@@ -134,6 +134,10 @@ class Structure {
 	private function getStructure() {
 		
 		$conn = $this->message->mailbox->connection;
+		
+		if(!$this->message->mailbox->selected) {
+			$this->message->mailbox->select();
+		}
 
 	
 		$struct = array();
@@ -161,10 +165,8 @@ class Structure {
 	public function hasAlternativeBody($parts = null){		
 		
 		if(!isset($parts)){
-			$parts = $this->getParts();
-		}
-		
-		
+			$parts = $this->parts;
+		}	
 
 		foreach($parts as $part){
 			if($part instanceof SinglePart){
@@ -178,8 +180,7 @@ class Structure {
 					return $this->hasAlternativeBody($part->parts);
 				}
 			}
-		}
-	
+		}	
 	}
 	
 	/**
@@ -190,8 +191,7 @@ class Structure {
 	 * @param array $parts
 	 * @return SinglePart[]
 	 */
-	public function findParts($type='text', $subtype='html', $parts = null) {
-		
+	public function findParts($type='text', $subtype='html', $parts = null) {	
 		
 		$results  = [];
 		

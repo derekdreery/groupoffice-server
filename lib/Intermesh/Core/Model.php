@@ -78,6 +78,12 @@ abstract class Model extends AbstractObject {
 		}
 	}
 
+	/**
+	 * Convert this model to an array for JSON output
+	 * 
+	 * @param array $attributes
+	 * @return array
+	 */
 	public function toArray(array $attributes = []) {
 
 		$arr = ['attributes' => []];
@@ -90,22 +96,35 @@ abstract class Model extends AbstractObject {
 			foreach($props as $prop){
 				
 				if(!$prop->isStatic()){
-					$name = $prop->getName();
-					
-					$value = $this->$name;
-					
-					if(is_object($value) && method_exists($value, 'toArray')){
-						$value = $value->toArray();
-					}
-
-					$arr['attributes'][$name] = $value;
+					$attributes[] = $prop->getName();					
 				}
 			}
-		} else {
-			foreach ($attributes as $attribute) {
-				$arr['attributes'][$attribute] = $this->$attribute;
+		} 
+		
+		foreach ($attributes as $attribute) {
+
+			$value = $this->$attribute;
+
+			if(is_object($value) && method_exists($value, 'toArray')){
+				$value = $value->toArray();
 			}
+			
+			if(is_array($value)){
+				if(is_object($value[0]) && method_exists($value[0], 'toArray')){
+					
+					$arr['attributes'][$attribute] = [];
+					
+					foreach($value as $v){
+						$arr['attributes'][$attribute][] = $v->toArray();
+					}
+					
+					continue;
+				}
+			}			
+			$arr['attributes'][$attribute] = $value;
+			
 		}
+		
 
 		return $arr;
 	}

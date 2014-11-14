@@ -1,12 +1,10 @@
 <?php
-
 namespace Intermesh\Modules\Imap\Model;
 
-use DateInterval;
-use DateTime;
 use Intermesh\Core\Db\AbstractRecord;
 use Intermesh\Core\Db\RelationFactory;
 use Intermesh\Modules\Auth\Model\User;
+use Intermesh\Modules\Email\Imap\Connection;
 
 
 /**
@@ -28,22 +26,34 @@ use Intermesh\Modules\Auth\Model\User;
  * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
 class Account extends AbstractRecord {
+	
+	private $_connection;
 
 	protected static function defineRelations(RelationFactory $r) {
 		return [
 			$r->belongsTo('owner', User::className(), 'ownerUserId'),
 		];
-	}
+	}	
 
-	
+	/**
+	 * Get the IMAP connection
+	 * 
+	 * @return Connection
+	 */
+	public function getConnection() {
+		
+		if(!isset($this->_connection)) {
+			$this->_connection = new Connection(
+				$this->host,
+				$this->port,
+				$this->username, 
+				$this->password, 
+				$this->encrytion == 'ssl', 
+				$this->encrytion=='tls', 
+				'plain');
+		}
 
-	private function getConnection($mailbox = "INBOX") {
-
-
-
-//		echo $mailboxStr.', '.$this->username.', '.$this->password;
-
-//		return imap_open($this->getMailboxSpec($mailbox), $this->username, $this->password);
+		return $this->_connection;
 	}
 
 
