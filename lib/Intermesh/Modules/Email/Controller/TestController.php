@@ -23,14 +23,14 @@ class TestController extends AbstractRESTController {
 		
 		
 
-//		$mailbox = new \Intermesh\Modules\Email\Imap\Mailbox($connection);
-//		
-//		$mailboxes = $mailbox->getChildren();
-//		
-//		foreach($mailboxes as $mailbox){
-//			$response['mailboxes'][] = ['name' => $mailbox->name, 'unseenCount' => $mailbox->getUnseenCount(), 'messagesCount' => $mailbox->getMessagesCount()];
-//		}
-//		
+		$mailbox = new \Intermesh\Modules\Email\Imap\Mailbox($connection);
+		
+		$mailboxes = $mailbox->getChildren();
+		
+		foreach($mailboxes as $mailbox){
+			$response['mailboxes'][] = ['name' => $mailbox->name, 'unseenCount' => $mailbox->getUnseenCount(), 'messagesCount' => $mailbox->getMessagesCount()];
+		}
+		
 		
 		
 		
@@ -41,14 +41,16 @@ class TestController extends AbstractRESTController {
 		foreach($messages as $message){
 			
 			
-//			echo  $message->getBody();
+			 $message->getBody();
 			
 			
-			$atts = $message->getAttachments();
+//			$response['data'] = $message->toArray(['subject','from', 'to', 'body', 'attachments']);
 			
-			$atts[0]->output();
-			exit();
-
+//			$atts = $message->getAttachments();
+			
+//			$atts[0]->output();
+//			exit();
+			
 			
 			//$response['messages'][] = ['subject' => $message->subject, 'date' => $message->date->format('Y-m-d H:i')];
 //			$response['messages'][] = $message->toArray();

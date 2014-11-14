@@ -2,16 +2,29 @@
 
 namespace Intermesh\Modules\Email\Imap;
 
+/**
+ * Message body structure
+ * 
+ * Reads the structure and turns it into SinglePart and MultiPart objects
+ * 
+ * @copyright (c) 2014, Intermesh BV http://www.intermesh.nl
+ * @author Merijn Schering <mschering@intermesh.nl>
+ * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
+ */
 class Structure {
 
 	/**
-	 *
+	 * The IMAP message it belongs to
+	 * 
 	 * @var Message 
 	 */
 	private $message;
 	
 	/**
-	 *
+	 * The parts of the structure.
+	 * 
+	 * Parts can have sub parts too.
+	 * 
 	 * @var AbstractPart[] 
 	 */
 	public $parts;
@@ -118,7 +131,7 @@ class Structure {
 		return $tokens;
 	}
 
-	public function getStructure() {
+	private function getStructure() {
 		
 		$conn = $this->message->mailbox->connection;
 
@@ -139,10 +152,12 @@ class Structure {
 		
 	}
 	
-	private $_findParts;
-	
-	
-	
+	/**
+	 * Check if the message has an alternative html body
+	 * 
+	 * @param array $parts Used internally for recursion
+	 * @return boolean
+	 */
 	public function hasAlternativeBody($parts = null){		
 		
 		if(!isset($parts)){

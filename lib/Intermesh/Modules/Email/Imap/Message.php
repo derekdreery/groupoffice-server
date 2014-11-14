@@ -7,34 +7,16 @@ use Intermesh\Core\Model;
 use Intermesh\Core\Util\String;
 
 
-	/*
-		 *  ["uid"]=>
-  string(1) "4"
-  ["flags"]=>
-  array(1) {
-    [0]=>
-    string(0) ""
-  }
-  ["internaldate"]=>
-  string(26) "19-Sep-2014 11:33:12 +0200"
-  ["rfc822.size"]=>
-  string(4) "2540"
-  ["date"]=>
-  string(38) "Fri, 19 Sep 2014 11:33:12 +0200 (CEST)"
-  ["from"]=>
-  string(55) "MAILER-DAEMON@mail.intermesh.dev (Mail Delivery System)"
-  ["subject"]=>
-  string(35) "Undelivered Mail Returned to Sender"
-  ["to"]=>
-  string(19) "admin@intermesh.dev"
-  ["content_type"]=>
-  string(46) "multipart/report; report-type=delivery-status;"
-  ["	boundary="a7c9eb20b05.1411119192/mschering_ux31a""]=>
-  string(0) ""
-  ["message_id"]=>
-  string(44) "<20140919093312.E67F0B20BF0@mschering-UX31A>"
-		 */
-
+/**
+ * Message object
+ * 
+ * Represents an IMAP message
+ *
+ * 
+ * @copyright (c) 2014, Intermesh BV http://www.intermesh.nl
+ * @author Merijn Schering <mschering@intermesh.nl>
+ * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
+ */
 class Message extends Model {
 
 	/**
@@ -81,32 +63,90 @@ class Message extends Model {
 	public $date;
 	
 	/**
-	 *
-	 * @var type 
+	 * The from address
+	 * 
+	 * @var \Intermesh\Modules\Email\Util\Recipient 
 	 */
 	public $from;
 	
+	/**
+	 * The Subject
+	 * 
+	 * @var string 
+	 */
 	public $subject;
 	
+	
+	/**
+	 * The to recipients
+	 * 
+	 * @var Recipient[] 
+	 */
 	public $to;
 	
+	/**
+	 * The cc recipients
+	 * 
+	 * @var Recipient[] 
+	 */
 	public $cc;
 	
+	/**
+	 * The bcc recipients
+	 * 
+	 * @var Recipient[] 
+	 */
 	public $bcc;
 	
+	/**
+	 * The to recipients
+	 * 
+	 * @var Recipient[] 
+	 */
 	public $replyTo;
 	
+	/**
+	 * Content type header
+	 * 
+	 * eg. text/plain; charset=utf-8
+	 * 
+	 * @var string 
+	 */
 	public $contentType;
 	
+	/**
+	 * Message-ID header
+	 * 
+	 * eg. <sadasdsad@domain.com>
+	 * 
+	 * @var string 
+	 */
 	public $messageId;
 	
+	/**
+	 * Priority header
+	 * 
+	 * @var string 
+	 */
 	public $xPriority;
 	
+	/**
+	 * Do we need this???
+	 * 
+	 * @var string 
+	 */
 	public $contentTransferEncoding;
 	
+	/**
+	 * Send a notification to this address
+	 * 
+	 * @var \Intermesh\Modules\Email\Util\Recipient 
+	 */
 	public $dispositionNotificationTo;
 	
-	public static $mimeDecodeAttributes = ['to', 'replyTo', 'cc', 'bcc', 'dispositionNotificationTo', 'subject'];
+	private static $mimeDecodeAttributes = ['to', 'replyTo', 'cc', 'bcc', 'dispositionNotificationTo', 'subject'];
+	
+	private $_structure;
 
 
 	public function __construct(Mailbox $mailbox) {
@@ -204,11 +244,12 @@ class Message extends Model {
 				}
 				
 				if($prop == 'to' || $prop == 'cc' || $prop == 'bcc'){
-					$value = new \Intermesh\Modules\Email\Util\RecipientList($value);
+					$list = new \Intermesh\Modules\Email\Util\RecipientList($value);
+					$value = $list->toArray();
 				}
 				
 				
-				if($prop == 'from'){
+				if($prop == 'from' || $prop == 'replyTo' || $prop == 'displayNotificationTo'){
 					$list = new \Intermesh\Modules\Email\Util\RecipientList($value);
 					$value = $list[0];
 				}
@@ -220,9 +261,10 @@ class Message extends Model {
 		return $message;
 	}
 	
-	private $_structure;
+	
 	
 	/**
+	 * Get's the message structure object
 	 * 
 	 * @return Structure
 	 */
@@ -294,7 +336,5 @@ class Message extends Model {
 		}
 		
 		return $attachments;
-	}
-	
-	
+	}	
 }

@@ -4,13 +4,34 @@ namespace Intermesh\Modules\Email\Imap;
 
 use Intermesh\Core\Util\String;
 
+/**
+ * IMAP Functions
+ * 
+ * @copyright (c) 2014, Intermesh BV http://www.intermesh.nl
+ * @author Merijn Schering <mschering@intermesh.nl>
+ * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
+ */
 class Utils {
 	
-	
+	/**
+	 * Escape a value for an IMAP command
+	 * 
+	 * @param string$str
+	 * @return string
+	 */
 	public static function escape($str){
 		return str_replace(array('\\','"'), array('\\\\','\"'), $str);
 	}
 
+	/**
+	 * Decodes MIME message header extensions that are non ASCII text (see RFC2047).
+	 * 
+	 * {@see http://www.faqs.org/rfcs/rfc2047}
+	 * 
+	 * @param string $string
+	 * @param string $defaultCharset
+	 * @return string
+	 */
 	public static function mimeHeaderDecode($string, $defaultCharset = 'UTF-8') {
 		/*
 		 * (=?ISO-8859-1?Q?a?= =?ISO-8859-1?Q?b?=)     (ab)
@@ -52,6 +73,14 @@ class Utils {
 		return str_replace(array('\\\\', '\\(', '\\)'), array('\\', '(', ')'), $string);
 	}
 
+	/**
+	 * Decodes an UTF-7 encoded string into UTF-8
+	 * 
+	 * This function is needed to decode mailbox names that contain certain characters which are not in range of printable ASCII characters.
+	 * 
+	 * @param string $str
+	 * @return string
+	 */
 	public static function utf7Decode($str) {
 		$Index_64 = array(
 			-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -135,6 +164,14 @@ class Utils {
 		return $p;
 	}
 
+	/**
+	 * Encodes an UTF-8 string to UTF-7 encoding
+	 * 
+	 * This function is needed to encode mailbox names that contain certain characters which are not in range of printable ASCII characters.
+	 * 
+	 * @param string $str
+	 * @return string
+	 */
 	public static function utf7Encode($str) {
 		$B64Chars = array(
 			'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',

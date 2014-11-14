@@ -1,7 +1,16 @@
 <?php
-
 namespace Intermesh\Modules\Email\Imap;
 
+/**
+ * IMAP Data streamer
+ * 
+ * Can be used to stream attachments straight to the browser or a file in a 
+ * memory efficient way.
+ *
+ * @copyright (c) 2014, Intermesh BV http://www.intermesh.nl
+ * @author Merijn Schering <mschering@intermesh.nl>
+ * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
+ */
 class Streamer {
 
 	private $filePointer;

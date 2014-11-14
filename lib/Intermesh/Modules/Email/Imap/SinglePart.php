@@ -2,21 +2,58 @@
 
 namespace Intermesh\Modules\Email\Imap;
 
+use Exception;
+use Intermesh\Modules\Imap\Model\Message;
+
+/**
+ * SinglePart class
+ * 
+ * A single part can be the html body or an attachment part
+ *
+ * @copyright (c) 2014, Intermesh BV http://www.intermesh.nl
+ * @author Merijn Schering <mschering@intermesh.nl>
+ * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
+ */
 class SinglePart extends AbstractPart{
 
-	
+	/**
+	 * Content ID
+	 * 
+	 * @var string 
+	 */
 	public $id;
 	
 	public $description;
 	
+	/**
+	 * Encoding type
+	 * 
+	 * eg. base64 or quoted-printable
+	 * 
+	 * @var string 
+	 */
 	public $encoding;
 	
+	/**
+	 * Size in bytes
+	 * 
+	 * @var int 
+	 */
 	public $size;
 	
 	public $lines;
 	
 	public $md5;
 	
+	/**
+	 * Disposition
+	 * 
+	 * eg.
+	 * 
+	 * ['attachment' => ['filename' => 'Doc.pdf']]
+	 * 
+	 * @var array 
+	 */
 	public $disposition;
 	
 	public $language;
@@ -39,6 +76,13 @@ class SinglePart extends AbstractPart{
 		}
 	}
 	
+	/**
+	 * Get the filename
+	 * 
+	 * Uses the part name or content disposition
+	 * 
+	 * @return boolean
+	 */
 	public function getFilename(){
 		if(!empty($this->params['name'])){
 			return Utils::mimeHeaderDecode($this->params['name']);
@@ -69,7 +113,11 @@ class SinglePart extends AbstractPart{
 		}
 	}
 	
-	
+	/**
+	 * Get's the data decoded
+	 * 
+	 * @return string
+	 */
 	public function getDataDecoded(){
 		switch($this->encoding){
 			case 'base64':
@@ -83,12 +131,35 @@ class SinglePart extends AbstractPart{
 		}
 	}
 	
-	public function output(){
+	
+	/**
+	 * Stream data to a file pointer
+	 * 
+	 * @param $filePointer If none is given the browser output will be used
+	 */
+	public function output($filePointer = null){
 		
-		header('Content-Type: '.$this->type.'/'.$this->subtype);
-		header('Content-Disposition: inline; filename='.$this->getFilename());
 		
-		$streamer = new Streamer(fopen("php://output",'w'), $this->encoding);
+		if(!isset($filePointer)){
+			
+			$sendHeaders = true;
+		
+			$filePointer = fopen("php://output",'w');
+		}else
+		{
+			$sendHeaders = false;
+		}
+		
+		if(!is_resource($filePointer)){
+			throw new Exception("Invalid file pointer given");
+		}
+		
+		if($sendHeaders){
+			header('Content-Type: '.$this->type.'/'.$this->subtype);
+			header('Content-Disposition: inline; filename='.$this->getFilename());
+		}		
+		
+		$streamer = new Streamer($filePointer, $this->encoding);
 		
 		$this->getData(true, $streamer);
 	}	

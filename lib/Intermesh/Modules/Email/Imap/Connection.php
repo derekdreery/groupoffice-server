@@ -6,7 +6,15 @@ use Exception;
 use Intermesh\Core\App;
 
 /**
- * https://tools.ietf.org/html/rfc3501
+ * IMAP Connection
+ * 
+ * Connects and communicates with an IMAP server
+ *
+ * @link https://tools.ietf.org/html/rfc3501
+ * 
+ * @copyright (c) 2014, Intermesh BV http://www.intermesh.nl
+ * @author Merijn Schering <mschering@intermesh.nl>
+ * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
  */
 class Connection {
 
@@ -19,7 +27,28 @@ class Connection {
 	private $password = '';
 	private $starttls = false;
 	private $auth = 'plain';
+	
+	private $_capability;
+	
+	
+	/**
+	 * Set to true if the last IMAP command had an OK response.
+	 * 
+	 * @var boolean 
+	 */
+	public $lastCommandSuccessful = false;
 
+	/**
+	 * Constructor
+	 * 
+	 * @param string $server
+	 * @param int $port
+	 * @param string $username
+	 * @param string $password
+	 * @param boolean $ssl
+	 * @param boolean $starttls
+	 * @param string $auth 'plain' or 'cram-md5'
+	 */
 	public function __construct($server, $port, $username, $password, $ssl = false, $starttls = false, $auth = 'plain') {
 
 		$this->ssl = $ssl;
@@ -47,6 +76,11 @@ class Connection {
 		return $this->handle;
 	}
 
+	/**
+	 * Connects to the IMAP server
+	 * 
+	 * @return boolean
+	 */
 	public function connect() {
 
 		$this->getHandle();
@@ -54,17 +88,19 @@ class Connection {
 		return true;
 	}
 	
+	/**
+	 * Checks if authentication was made
+	 * 
+	 * @return boolean
+	 */
 	public function isAuthenticated(){
 		return $this->authenticated;
 	}
 
 	/**
-	 * Handles authentication. You can optionally set
-	 * $this->starttls or $this->auth to CRAM-MD5
+	 * Authenticate to the IMAP server
 	 *
-	 * @param <type> $username
-	 * @param <type> $pass
-	 * @return <type>
+	 * @return boolean
 	 */
 	public function authenticate() {
 
@@ -121,21 +157,16 @@ class Connection {
 				}
 
 			}
-		}
-
-		
+		}		
 
 		return $this->authenticated;
-	}
-	
-	private $_capability;
-	
+	}	
 	
 	/**
 	 * Get's the capabilities of the IMAP server. Useful to determine if the
 	 * IMAP server supports server side sorting.
 	 *
-	 * @return <type>
+	 * @return string
 	 */
 
 	public function getCapability() {
@@ -163,7 +194,14 @@ class Connection {
 	}
 	
 	
-
+	/**
+	 * Send command to IMAP
+	 * 
+	 * eg. sendCommand("STATUS INBOX");
+	 * 
+	 * @param string $command
+	 * @throws Exception
+	 */
 	public function sendCommand($command) {
 		$handle = $this->getHandle();
 
@@ -176,10 +214,13 @@ class Connection {
 		}
 	}
 	
-	public $lastCommandSuccessful = false;
 	
-	
-	
+	/**
+	 * Reads a single line from the IMAP server
+	 * 
+	 * @param int $length
+	 * @return string
+	 */
 	public function readLine($length = 8192){
 		$line = fgets($this->getHandle(), $length);
 
@@ -191,20 +232,16 @@ class Connection {
 	/**
 	 * Returns text response in array
 	 * 
+	 * @param Streamer Optionally a Streamer object can be passed to stream it to a file or output for memory efficiency.
 	 * @return array
 	 */
 	public function getResponse(Streamer $streamer = null) {
 
-		$response = [];
-
-		
+		$response = [];	
 
 		do {
 			$chunk = trim($this->readLine());
 
-			
-//			echo $chunk."\n";
-			
 			if(substr($chunk, 0, 1) === '*'){
 				
 				if(isset($data)){
@@ -247,7 +284,27 @@ class Connection {
 	}
 	
 
-	public function getLiteralDataResponse($size, Streamer $streamer = null) {
+	/**
+	 * The IMAP server can respond with some data when you fetch an attachment 
+	 * for example.
+	 * 
+	 * This data is read into a single response. Optionally a Streamer object can
+	 * be passed to stream it to a file or output for memory efficiency.
+	 * 
+	 * eg.:
+	 * 
+	 * A12 UID FETCH 13 BODY.PEEK[1.2]
+     * * 13 FETCH (UID 13 BODY[1.2] {312}
+	 * <html>
+	 * .. more data...
+	 * </html>
+	 * )
+	 * 
+	 * @param int $size
+	 * @param \Intermesh\Modules\Email\Imap\Streamer $streamer
+	 * @return string
+	 */
+	private function getLiteralDataResponse($size, Streamer $streamer = null) {
 		$max = 8192 > $size ? $size : 8192;
 		
 		$readLength = 0;

@@ -5,6 +5,16 @@ namespace Intermesh\Modules\Email\Imap;
 use Exception;
 use Intermesh\Core\AbstractObject;
 
+/**
+ * Mailbox object
+ * 
+ * Handles all mailbox related IMAP functions
+ *
+ * 
+ * @copyright (c) 2014, Intermesh BV http://www.intermesh.nl
+ * @author Merijn Schering <mschering@intermesh.nl>
+ * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
+ */
 class Mailbox extends AbstractObject {
 	
 	/**
@@ -13,15 +23,47 @@ class Mailbox extends AbstractObject {
 	 */
 	public $connection;
 	
+	/**
+	 * Name of the mailbox
+	 * 
+	 * @var string 
+	 */
 	public $name;
 	
+	/**
+	 * Reference. In most cases this is a namespace.
+	 * 
+	 * @var string 
+	 */
 	public $reference = "";	
 	
-	public $delimiter;
+	/**
+	 * Mailbox delimiter
+	 * 
+	 * Usually "/" or "."
+	 * 
+	 * @var string 
+	 */
+	public $delimiter;	
 	
+	/**
+	 * Array of mailbox flags
+	 * 
+	 * eg. NoInferiors, HasChildren
+	 * 
+	 * @var string 
+	 */
 	public $flags = [];
+	
+	
+	private $_status;
 
 	
+	/**
+	 * Constructor
+	 * 
+	 * @param \Intermesh\Modules\Email\Imap\Connection $connection
+	 */
 	public function __construct(Connection $connection) {
 		parent::__construct();
 
@@ -33,6 +75,11 @@ class Mailbox extends AbstractObject {
 	}
 	
 	/**
+	 * Finds a mailbox by name
+	 * 
+	 * eg. 
+	 * 
+	 * $mailbox = Mailbox::findByName($conn, "INBOX");
 	 * 
 	 * @param string $name
 	 * @param string $reference
@@ -61,6 +108,10 @@ class Mailbox extends AbstractObject {
 	}
 	
 	/**
+	 * Not used directly.
+	 * 
+	 * When you use a find command this function is used to create mailboxes from
+	 * the IMAP response.
 	 * 
 	 * @param Connection $connection
 	 * @param array $lineParts
@@ -89,9 +140,16 @@ class Mailbox extends AbstractObject {
 		return $mailbox;		
 	}
 	
-	private $_status;
 	
 	
+	/**
+	 * Get the mailbox status
+	 * 
+	 * Only messages and unseen are feteched
+	 * 
+	 * @return array eg. ['messages'=> 1, 'unseen' => 1]
+	 * @throws Exception
+	 */
 	private function getStatus(){
 		
 		if(!isset($this->_status)){
@@ -127,13 +185,22 @@ class Mailbox extends AbstractObject {
 		return $this->_status;
 	}
 	
-	
+	/**
+	 * Get the number of unseen messages
+	 * 
+	 * @return int
+	 */
 	public function getUnseenCount(){
 		$status = $this->getStatus();
 		
 		return $status['unseen'];
 	}
 	
+	/**
+	 * Get the number of messages
+	 * 
+	 * @return int
+	 */
 	public function getMessagesCount(){
 		$status = $this->getStatus();
 		
@@ -141,9 +208,9 @@ class Mailbox extends AbstractObject {
 	}
 	
 	/**
+	 * Get children mailboxes	  
 	 * 
-	 * @param bool $listSubscribed
-	 * 
+	 * @param bool $listSubscribed	
 	 * @return Mailbox[]
 	 */
 	public function getChildren($listSubscribed = true){
@@ -178,11 +245,12 @@ class Mailbox extends AbstractObject {
 	}
 	
 	/**
+	 * Get messages from this mailbox
 	 * 
-	 * @return Message
+	 * @return Message[]
 	 */
-	public function getMessages($sort = 'DATE', $reverse = true, $limit = 10, $offset = 0){
-		$uids = $this->serverSideSort($sort, $reverse);
+	public function getMessages($sort = 'DATE', $reverse = true, $limit = 10, $offset = 0, $filter='ALL'){
+		$uids = $this->serverSideSort($sort, $reverse, $filter);
 		
 		if($limit>0){
 			$uids = array_slice($uids, $offset, $limit);
@@ -199,6 +267,11 @@ class Mailbox extends AbstractObject {
 		return $messages;
 	}
 	
+	/**
+	 * Select this mailbox on the IMAP server
+	 * 
+	 * @return boolean
+	 */
 	private function select(){
 		$command = 'SELECT "'.Utils::escape(Utils::utf7Encode($this->name)).'"';
 		
@@ -210,7 +283,15 @@ class Mailbox extends AbstractObject {
 	}
 	
 	
-	
+	/**
+	 * Get an array of UIDS sorted by the server.
+	 * 
+	 * @param string $sort 'DATE", 'ARRIVAL', 'SUBJECT', 'FROM'
+	 * @param boolean $reverse
+	 * @param string $filter
+	 * 
+	 * @return array|boolean UID list ['1','2']
+	 */
 	private function serverSideSort($sort = 'DATE', $reverse = true, $filter="ALL") {
 		
 		$this->select();
@@ -249,39 +330,7 @@ class Mailbox extends AbstractObject {
 		return $uids;
 	}
 	
-	
-	
-	/**
-	 * Get's message headers from an UID range:
-	 *
-	 * $message=array(
-					'to'=>'',
-					'cc'=>'',
-					'bcc'=>'',
-					'from'=>'',
-					'subject'=>'',
-					'uid'=>'',
-					'size'=>'',
-					'internal_date'=>'',
-					'date'=>'',
-					'udate'=>'',
-					'internal_udate'=>'',
-					'x-priority'=>3,
-					'reply-to'=>'',
-					'content-type'=>'',
-					'disposition-notification-to'=>'',
-					'content-transfer-encoding'=>'',
-				 'charset'=>'',
-					'seen'=>0,
-					'flagged'=>0,
-					'answered'=>0,
-					'forwarded'=>0
-				);
-	 *
-	 * @param <type> $uids
-	 * @return <type>
-	 */
-	private function getMessageHeaders($uids, $full_data=false) {
+	private function getMessageHeaders($uids) {
 
 		if(empty($uids)){
 			return [];
@@ -293,175 +342,8 @@ class Mailbox extends AbstractObject {
 
 		$this->connection->sendCommand($command);
 		$res = $this->connection->getResponse();
-
-//		var_dump($res);
-			
-		
-		
-		
 		
 		return $res;
 		
-//		exit();
-		
-	
-		$tags = array('UID' => 'uid', 'FLAGS' => 'flags', 'X-GM-LABELS' => 'flags', 'RFC822.SIZE' => 'size', 'INTERNALDATE' => 'internal_date');
-		$junk = array('SUBJECT', 'FROM', 'CONTENT-TYPE', 'TO', 'CC','BCC', '(', ')', ']', 'X-PRIORITY', 'DATE','REPLY-TO','DISPOSITION-NOTIFICATION-TO','CONTENT-TRANSFER-ENCODING', 'MESSAGE-ID');
-		//$flds = array('uid','flags','size','internal_date','answered','seen','','reply-to', 'content-type','x-priority','disposition-notification-to');
-		$headers = array();
-		foreach ($res as $n => $vals) {
-			if (isset($vals[0]) && $vals[0] == '*') {
-				$message=array(
-					'to'=>'',
-					'cc'=>'',
-					'bcc'=>'',
-					'from'=>'',
-					'subject'=>'',
-					'uid'=>'',
-					'size'=>'',
-					'internal_date'=>'',
-					'date'=>'',
-					'udate'=>'',
-					'internal_udate'=>'',
-					'x_priority'=>3,
-					'reply_to'=>'',
-					'message_id'=>'',
-					'content_type'=>'',
-					'content_type_attributes'=>array(),
-					'disposition_notification_to'=>'',
-					'content_transfer_encoding'=>'',
-					'charset'=>'',
-					'seen'=>0,
-					'flagged'=>0,
-					'answered'=>0,
-					'forwarded'=>0,
-					'has_attachments'=>0,
-					'labels'=>array(),
-					'deleted'=>0,
-				);
-
-				$count = count($vals);
-				for ($i=0;$i<$count;$i++) {
-					if ($vals[$i] == 'BODY[HEADER.FIELDS') {
-						$i++;
-						while(isset($vals[$i]) && in_array($vals[$i], $junk)) {
-							$i++;
-						}
-
-						$header = str_replace("\r\n", "\n", $vals[$i]);
-						$header = preg_replace("/\n\s/", " ", $header);
-
-						$lines = explode("\n", $header);
-
-						foreach ($lines as $line) {
-							if(!empty($line)) {
-								$header = trim(strtolower(substr($line, 0, strpos($line, ':'))));
-								$header = str_replace('-','_',$header);
-
-								if (!$header && !empty($last_header)) {
-									$message[$last_header] .= "\n".trim($line);
-								}else {
-									if(isset($message[$header])){
-										$message[$header] = trim(substr($line, (strpos($line, ':') + 1)));
-										$last_header = $header;
-									}
-								}
-							}
-						}
-					}
-					elseif (isset($tags[strtoupper($vals[$i])])) {
-						if (isset($vals[($i + 1)])) {
-							if ($tags[strtoupper($vals[$i])] == 'flags' && $vals[$i + 1] == '(') {
-								$n = 2;
-								while (isset($vals[$i + $n]) && $vals[$i + $n] != ')') {
-									$prop = str_replace('-','_',strtolower(substr($vals[$i + $n],1)));
-									//\GO::debug($prop);
-									if(isset($message[$prop])) {
-										$message[$prop]=true;
-									} else {
-										$message['labels'][] = strtolower($vals[$i + $n]);
-									}
-
-									$n++;
-								}
-								$i += $n;
-							}
-							else {
-								$prop = $tags[strtoupper($vals[$i])];
-
-								if(isset($message[$prop]))
-										$message[$prop] = trim($vals[($i + 1)]);
-								$i++;
-							}
-						}
-					}
-				}
-				if ($message['uid']) {
-					if(isset($message['content_type'])) {
-						$message['content_type']=strtolower($message['content_type']);
-						if (strpos($message['content_type'], 'charset=')!==false) {
-							if (preg_match("/charset\=([^\s]+)/", $message['content_type'], $matches)) {
-								$message['charset'] = trim(str_replace(array('"', "'", ';'), '', $matches[1]));
-							}
-						}
-						if(preg_match("/([^\/]*\/[^;]*)(.*)/", $message['content_type'], $matches)){
-							$message['content_type']=$matches[1];
-							$atts = trim($matches[2], ' ;');
-							$atts=explode(';', $atts);
-
-							for($i=0;$i<count($atts);$i++){
-								$keyvalue=explode('=', $atts[$i]);
-								if(isset($keyvalue[1]) && $keyvalue[0]!='boundary')
-									$message['content_type_attributes'][trim($keyvalue[0])]=trim($keyvalue[1],' "');
-							}
-
-							//$message['content-type-attributes']=$atts;
-						}
-					}
-
-					//sometimes headers contain some extra stuff between ()
-					$message['date']=preg_replace('/\([^\)]*\)/','', $message['date']);
-
-					$message['udate']=strtotime($message['date']);
-					$message['internal_udate']=strtotime($message['internal_date']);
-					if(empty($message['udate']))
-						$message['udate']=$message['internal_udate'];
-
-					$message['subject']=$this->mime_header_decode($message['subject']);
-					$message['from']=$this->mime_header_decode($message['from']);
-					$message['to']=$this->mime_header_decode($message['to']);
-					$message['reply_to']=$this->mime_header_decode($message['reply_to']);
-					$message['disposition_notification_to']=$this->mime_header_decode($message['disposition_notification_to']);
-
-					if(isset($message['cc']))
-						$message['cc']=$this->mime_header_decode($message['cc']);
-
-					if(isset($message['bcc']))
-						$message['bcc']=$this->mime_header_decode($message['bcc']);
-
-					preg_match("'([^/]*)/([^ ;\n\t]*)'i", $message['content_type'], $ct);
-
-					if (isset($ct[2]) && $ct[1] != 'text' && $ct[2] != 'alternative' && $ct[2] != 'related')
-					{
-						$message["has_attachments"] = 1;
-					}
-
-					$headers[$message['uid']] = $message;
-
-					//$message['priority']=intval($message['x-priority']);
-
-
-				}
-			}
-		}
-		$final_headers = array();
-		foreach ($uids as $v) {
-			if (isset($headers[$v])) {
-				$final_headers[$v] = $headers[$v];
-			}
-		}
-
-		//\GO::debug($final_headers);
-		return $final_headers;
 	}
 }

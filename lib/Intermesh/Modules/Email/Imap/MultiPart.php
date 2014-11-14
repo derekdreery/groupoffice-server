@@ -2,14 +2,22 @@
 
 namespace Intermesh\Modules\Email\Imap;
 
+/**
+ * MultiPart class
+ * 
+ * A multipart contains a text and html part for example
+ *
+ * @copyright (c) 2014, Intermesh BV http://www.intermesh.nl
+ * @author Merijn Schering <mschering@intermesh.nl>
+ * @license https://www.gnu.org/licenses/lgpl.html LGPLv3
+ */
 class MultiPart extends AbstractPart{
-	
-	
-	
-	
+	/**
+	 * The sub parts of this part
+	 * 
+	 * @var AbstractPart[] 
+	 */
 	public $parts=[];
-	
-
 	
 	
 	public function __construct(Message $message, $partNumber, array $struct) {
@@ -17,8 +25,6 @@ class MultiPart extends AbstractPart{
 		if(!empty($partNumber)){
 			$partNumber .= ".0";
 		}
-		
-		
 		
 		$this->message = $message;
 		
